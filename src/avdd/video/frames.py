@@ -15,8 +15,32 @@ from avdd.common.errors import VideoError
 @dataclass(frozen=True)
 class SampledFrame:
     index: int
-    t_s: float
+    t_s: float | None  # None for a still image: there is no timeline
     image_bgr: NDArray[np.uint8]
+
+
+MAX_IMAGE_PIXELS = 40_000_000  # decompression-bomb guard; the upload gate enforces the same cap
+
+
+def load_image_frame(path: str | Path, max_pixels: int = MAX_IMAGE_PIXELS) -> SampledFrame:
+    """Decode a still image (JPEG/PNG/WebP/BMP) into one BGR frame.
+
+    EXIF orientation is applied by OpenCV's decoder. Raises ``VideoError``
+    (image_decode_failed, image_too_large).
+    """
+    import cv2
+
+    try:
+        raw = np.fromfile(str(Path(path).resolve()), dtype=np.uint8)
+        img = cv2.imdecode(raw, cv2.IMREAD_COLOR) if raw.size else None
+    except (OSError, cv2.error) as exc:
+        raise VideoError("image_decode_failed", "image could not be decoded") from exc
+    if img is None:
+        raise VideoError("image_decode_failed", "image could not be decoded")
+    h, w = img.shape[:2]
+    if h * w > max_pixels:
+        raise VideoError("image_too_large", f"image exceeds {max_pixels / 1e6:g} megapixels")
+    return SampledFrame(0, None, np.asarray(img, dtype=np.uint8))
 
 
 def sample_frames(

@@ -20,27 +20,29 @@ from avdd.api.errors import ApiError, install_error_handlers
 from avdd.api.jobs import JobRunner
 from avdd.api.models import DetectorBundle, DetectorManager
 from avdd.api.schemas import (
+    AcceptedKind,
     AnalysisCreated,
     AnalysisResult,
     AnalysisStatusOut,
     AnalysisSummary,
     ApiErrorBody,
     CapabilitiesOut,
+    ClearedOut,
     ErrorResponse,
     HistoryOut,
     LimitsOut,
     ModelStatusOut,
 )
-from avdd.api.settings import Settings
+from avdd.api.settings import ACCEPTED_EXTENSIONS, Settings
 from avdd.api.store import Store
 from avdd.api.uploads import receive_upload, validate_media
 from avdd.pipeline.analyze import STAGES
 
 _ID_RE = re.compile(r"^[0-9a-f]{32}$")
 RETENTION = (
-    "Uploaded videos are processed from a temporary file that is deleted as soon as the analysis "
-    "finishes or fails. Only the analysis result (scores, timestamps, media metadata; no file name "
-    "and no media) is kept in a local database until you delete it."
+    "Uploaded media (video, audio or image) is processed from a temporary file that is deleted as soon "
+    "as the analysis finishes or fails. Only the analysis result (scores, timestamps, media metadata; "
+    "no file name and no media) is kept in a local database until you delete it."
 )
 EVALUATION = (
     "Pretrained-model inference only. No training was performed and no performance evaluation has "
@@ -112,9 +114,16 @@ def create_app(settings: Settings | None = None, detectors: DetectorBundle | Non
             avdd_version=__version__,
             models_state=manager.state,
             models=[ModelStatusOut.model_validate(m, from_attributes=True) for m in manager.statuses()],
-            limits=LimitsOut(max_upload_mb=round(s.max_upload_bytes / 1e6, 1), max_duration_s=s.max_duration_s,
-                             accepted_containers=sorted(s.allowed_containers), frames_sampled=s.n_frames,
-                             max_pending_jobs=s.max_pending),
+            limits=LimitsOut(
+                max_upload_mb=round(s.max_upload_bytes / 1e6, 1), max_duration_s=s.max_duration_s,
+                max_image_megapixels=s.max_image_pixels / 1e6,
+                accepted_containers=sorted(s.allowed_containers),
+                accepted={
+                    "video": AcceptedKind(label="Video", extensions=list(ACCEPTED_EXTENSIONS["video"])),
+                    "audio": AcceptedKind(label="Audio", extensions=list(ACCEPTED_EXTENSIONS["audio"])),
+                    "image": AcceptedKind(label="Image", extensions=list(ACCEPTED_EXTENSIONS["image"])),
+                },
+                frames_sampled=s.n_frames, max_pending_jobs=s.max_pending),
             retention=RETENTION,
             evaluation_status=EVALUATION,
             stages=list(STAGES),
@@ -123,7 +132,7 @@ def create_app(settings: Settings | None = None, detectors: DetectorBundle | Non
     @app.post("/api/analyses", status_code=202, response_model=AnalysisCreated,
               responses={400: err, 413: err, 415: err, 422: err, 429: err, 503: err})
     async def create_analysis(request: Request) -> AnalysisCreated:
-        """Upload a video as the raw request body (``Content-Type: application/octet-stream``)."""
+        """Upload a video, audio file or image as the raw request body (``application/octet-stream``)."""
         if manager.state == "loading":
             raise ApiError(503, "models_loading", "The models are still loading; try again shortly.")
         if manager.state == "unavailable":
@@ -154,12 +163,17 @@ def create_app(settings: Settings | None = None, detectors: DetectorBundle | Non
     @app.get("/api/analyses", response_model=HistoryOut)
     async def history() -> HistoryOut:
         items = []
-        for r in store.list():
+        for r in store.list(s.history_max_items):
             summary = json.loads(r["summary_json"]) if r["summary_json"] else {}
             code = json.loads(r["error_json"])["code"] if r["error_json"] else None
             items.append(AnalysisSummary(id=r["id"], status=r["status"], created_utc=r["created_utc"],
                                          error_code=code, **summary))
         return HistoryOut(items=items)
+
+    @app.delete("/api/analyses", response_model=ClearedOut)
+    async def clear_history() -> ClearedOut:
+        """Delete every finished record (completed or failed). Running analyses are kept."""
+        return ClearedOut(deleted=store.delete_finished())
 
     @app.get("/api/analyses/{analysis_id}", response_model=AnalysisStatusOut, responses={404: err})
     async def get_analysis(analysis_id: str) -> AnalysisStatusOut:

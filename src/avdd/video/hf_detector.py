@@ -10,6 +10,7 @@ from numpy.typing import NDArray
 
 from avdd.common.errors import ModelLoadError
 from avdd.common.model_card import ModelCard
+from avdd.common.protocols import ScoredItem
 from avdd.common.types import Modality
 
 DEFAULT_MODEL_ID = "prithivMLmods/Deep-Fake-Detector-v2-Model"
@@ -27,6 +28,8 @@ class HfImageDetector:
         self._model: Any = None
         self._processor: Any = None
         self._fake_idx = -1
+        self._id2label: dict[int, str] = {}
+        self.output_semantics: dict[str, Any] = {}
         self.model_card = ModelCard(
             name=model_id.split("/")[-1],
             version=f"{model_id}@{revision or 'main'}",
@@ -72,21 +75,48 @@ class HfImageDetector:
         if len(fakes) != 1:
             raise ModelLoadError("ambiguous_labels", f"cannot identify the 'fake' class from labels {id2label}")
         self._fake_idx = fakes[0]
+        self._id2label = id2label
+        self.output_semantics = {
+            "class_labels": [id2label[i] for i in sorted(id2label)],
+            "score_class": id2label[self._fake_idx],
+            "score_class_index": self._fake_idx,
+            "activation": "softmax over the classifier logits",
+            "reference": (
+                f"model config id2label {id2label}; the single label containing 'fake' is used "
+                "(load fails if that is ambiguous)"
+            ),
+            "higher_means": "more weight on the fake class (not a calibrated probability)",
+        }
         self._model = model.to(self._device).eval()
         return {"id2label": id2label, "fake_index": self._fake_idx,
                 "commit": getattr(model.config, "_commit_hash", None)}  # fmt: skip
 
+    @property
+    def device(self) -> str:
+        return self._device
+
     def score_faces(self, faces_rgb: Sequence[NDArray[np.uint8]]) -> list[float]:
+        return [item.score for item in self.score_faces_detailed(faces_rgb)]
+
+    def score_faces_detailed(self, faces_rgb: Sequence[NDArray[np.uint8]]) -> list[ScoredItem]:
+        """Per-crop score plus every class's logit and probability (for diagnostics)."""
         if self._model is None:
             raise ModelLoadError("not_loaded", "call load() before scoring")
         import torch  # type: ignore[import-not-found,unused-ignore]
         from PIL import Image
 
-        scores: list[float] = []
+        order = sorted(self._id2label)
+        out: list[ScoredItem] = []
         with torch.inference_mode():
             for i in range(0, len(faces_rgb), self._batch):
                 imgs = [Image.fromarray(f) for f in faces_rgb[i : i + self._batch]]
                 inputs = self._processor(images=imgs, return_tensors="pt").to(self._device)
-                probs = torch.softmax(self._model(**inputs).logits, dim=-1)[:, self._fake_idx]
-                scores.extend(probs.cpu().tolist())
-        return [float(s) for s in scores]
+                logits = self._model(**inputs).logits
+                probs = torch.softmax(logits, dim=-1)
+                for lg, pr in zip(logits.cpu().tolist(), probs.cpu().tolist(), strict=True):
+                    out.append(ScoredItem(
+                        score=float(pr[self._fake_idx]),
+                        logits={self._id2label[k]: float(lg[k]) for k in order},
+                        probs={self._id2label[k]: float(pr[k]) for k in order},
+                    ))
+        return out

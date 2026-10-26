@@ -21,6 +21,10 @@ logger = logging.getLogger(__name__)
 
 _MAX_ERROR_CHARS = 300
 
+# ffprobe reports a still image as a one-frame "video" stream in one of these demuxers.
+IMAGE_CONTAINERS = frozenset({"image2", "png_pipe", "jpeg_pipe", "webp_pipe", "bmp_pipe"})
+IMAGE_CODECS = frozenset({"mjpeg", "png", "webp", "bmp"})
+
 
 class ProbeStatus(str, Enum):
     """Outcome of probing a file."""
@@ -50,6 +54,7 @@ class MediaProbe:
     audio_codec: str | None = None
     sample_rate: int | None = None
     channels: int | None = None
+    kind: str | None = None  # "video" | "audio" | "image"; None when the file could not be parsed
     error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -156,6 +161,13 @@ def probe_media(
     duration = _to_float(fmt.get("duration"))
     if duration is None:
         duration = _to_float(v0.get("duration")) or _to_float(a0.get("duration"))
+    containers = {c.strip() for c in (fmt.get("format_name") or "").split(",")}
+    if video and not audio and len(video) == 1 and containers & IMAGE_CONTAINERS:
+        kind = "image"
+    elif video:
+        kind = "video"
+    else:
+        kind = "audio"
 
     return MediaProbe(
         status=ProbeStatus.OK,
@@ -172,4 +184,5 @@ def probe_media(
         audio_codec=a0.get("codec_name"),
         sample_rate=_to_int(a0.get("sample_rate")),
         channels=_to_int(a0.get("channels")),
+        kind=kind,
     )

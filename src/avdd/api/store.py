@@ -74,6 +74,11 @@ class Store:
         with closing(self._conn()) as c, c:
             return c.execute("DELETE FROM analyses WHERE id=?", (job_id,)).rowcount > 0
 
+    def delete_finished(self) -> int:
+        """Delete every completed or failed record; running jobs are left alone."""
+        with closing(self._conn()) as c, c:
+            return c.execute("DELETE FROM analyses WHERE status IN ('completed','failed')").rowcount
+
     def prune(self, keep: int) -> None:
         with closing(self._conn()) as c, c:
             c.execute("DELETE FROM analyses WHERE status IN ('completed','failed') AND id NOT IN "

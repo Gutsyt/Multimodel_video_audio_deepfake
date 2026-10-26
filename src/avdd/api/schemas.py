@@ -33,6 +33,7 @@ class ModelCardOut(BaseModel):
 
 
 class MediaInfo(BaseModel):
+    kind: Literal["video", "audio", "image"] | None = None
     container: str | None = None
     duration_s: float | None = None
     has_video: bool = False
@@ -52,6 +53,8 @@ class AudioSegment(BaseModel):
     start_s: float
     end_s: float
     score: float
+    logits: dict[str, float] | None = None
+    class_probs: dict[str, float] | None = None
 
 
 class FaceBoxOut(BaseModel):
@@ -63,10 +66,14 @@ class FaceBoxOut(BaseModel):
 
 class FrameEvidence(BaseModel):
     frame_index: int
-    t_s: float
+    t_s: float | None = None  # None for a still image
     n_faces: int
     face_box: FaceBoxOut | None = None
+    face_area_ratio: float | None = None
+    crop_px: list[int] | None = None
     score: float | None = None
+    logits: dict[str, float] | None = None
+    class_probs: dict[str, float] | None = None
 
 
 class ModalityResult(BaseModel):
@@ -78,8 +85,11 @@ class ModalityResult(BaseModel):
     aggregation: str | None = None
     runtime_s: float | None = None
     error_code: str | None = None
+    decision: Literal["flagged", "not_flagged"] | None = None  # this branch alone, at the default threshold
+    source: Literal["video", "image"] | None = None  # visual branch only
     model: ModelCardOut | None = None
     analyzed_limit_s: float | None = None
+    diagnostics: dict[str, Any] | None = None  # branch-specific audit data; keys documented in docs/
     # audio evidence
     segments: list[AudioSegment] | None = None
     n_windows: int | None = None
@@ -98,6 +108,9 @@ class ModalityResult(BaseModel):
 
 class FusionOut(BaseModel):
     method: str
+    rule: str | None = None
+    fusion_performed: bool | None = None  # None only for results stored before schema 0.2
+    configured_weights: dict[str, float] = {}
     state: Literal["insufficient_evidence", "single_modality", "multimodal"]
     fused_score: float | None = None
     flagged_at_default_threshold: bool | None = None
@@ -109,6 +122,20 @@ class FusionOut(BaseModel):
     threshold_validated: bool
     calibrated: bool
     notes: list[str]
+
+
+class AssessmentOut(BaseModel):
+    status: Literal["flagged", "not_flagged", "insufficient_evidence"]
+    basis: Literal["multimodal", "audio_only", "visual_only", "none"]
+    summary: str
+    score: float | None = None
+    score_kind: str | None = None
+    threshold: float
+    threshold_validated: bool
+    branch_decisions: dict[str, str | None]
+    modalities_used: list[str]
+    calibrated: bool
+    not_authenticity_note: str
 
 
 class Interpretation(BaseModel):
@@ -127,6 +154,7 @@ class AnalysisResult(BaseModel):
     media: MediaInfo
     modalities: dict[str, ModalityResult]
     fusion: FusionOut
+    assessment: AssessmentOut | None = None  # absent in results stored before schema 0.2
     models: list[ModelCardOut]
     is_test_fixture: bool
     interpretation: Interpretation
@@ -155,6 +183,11 @@ class AnalysisSummary(BaseModel):
     status: JobStatus
     created_utc: str
     duration_s: float | None = None
+    media_kind: str | None = None
+    assessment_status: str | None = None
+    basis: str | None = None
+    audio_decision: str | None = None
+    visual_decision: str | None = None
     fusion_state: str | None = None
     fused_score: float | None = None
     flagged: bool | None = None
@@ -170,6 +203,10 @@ class HistoryOut(BaseModel):
     items: list[AnalysisSummary]
 
 
+class ClearedOut(BaseModel):
+    deleted: int
+
+
 class ModelStatusOut(BaseModel):
     role: Literal["audio", "visual"]
     state: Literal["loading", "loaded", "failed", "disabled"]
@@ -177,10 +214,17 @@ class ModelStatusOut(BaseModel):
     card: ModelCardOut | None = None
 
 
+class AcceptedKind(BaseModel):
+    label: str
+    extensions: list[str]
+
+
 class LimitsOut(BaseModel):
     max_upload_mb: float
     max_duration_s: float
+    max_image_megapixels: float | None = None
     accepted_containers: list[str]
+    accepted: dict[str, AcceptedKind] = {}
     frames_sampled: int
     max_pending_jobs: int
 

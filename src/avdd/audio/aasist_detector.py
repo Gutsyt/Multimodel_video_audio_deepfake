@@ -3,9 +3,10 @@
 INFERENCE ONLY: the weights are the upstream checkpoints (trained by the AASIST authors
 on ASVspoof 2019 LA). Nothing is trained or fine-tuned here.
 
-Output convention (verified in upstream ``main.py``): the network returns two logits;
-index 1 is the *bona fide* score, so index 0 is the spoof class. We report
-``softmax(logits)[0]`` as a RAW spoof score in [0, 1]. It is not a calibrated probability.
+Output convention (verified against upstream clovaai/aasist at the vendored commit):
+``main.py`` takes ``batch_out[:, 1]`` as the bona fide score for evaluation and
+``data_utils.py`` labels ``bonafide=1, spoof=0``. So index 1 is bona fide and index 0 is spoof.
+We report ``softmax(logits)[0]`` as a RAW spoof score in [0, 1]. It is not a calibrated probability.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from numpy.typing import NDArray
 
 from avdd.common.errors import ModelLoadError
 from avdd.common.model_card import ModelCard
+from avdd.common.protocols import ScoredItem
 from avdd.common.types import Modality
 
 UPSTREAM_COMMIT = "a04c9863f63d44471dde8a6abcb3b082b07cd1d1"
@@ -111,6 +113,21 @@ _CONFIGS: dict[str, dict[str, Any]] = {
 
 _WEIGHT_FILES = {"AASIST": "AASIST.pth", "AASIST-L": "AASIST-L.pth"}
 
+# Class order of the network output. Index 0 = spoof, index 1 = bona fide (see module docstring).
+CLASS_LABELS: tuple[str, str] = ("spoof", "bona_fide")
+SPOOF_INDEX = 0
+OUTPUT_SEMANTICS: dict[str, object] = {
+    "class_labels": list(CLASS_LABELS),
+    "score_class": CLASS_LABELS[SPOOF_INDEX],
+    "score_class_index": SPOOF_INDEX,
+    "activation": "softmax over the two output logits",
+    "reference": (
+        "clovaai/aasist main.py evaluates batch_out[:, 1] as the bona fide score; "
+        "data_utils.py labels bonafide=1, spoof=0"
+    ),
+    "higher_means": "more weight on the spoof class (not a calibrated probability)",
+}
+
 
 def default_third_party_dir() -> Path:
     env = os.environ.get("AVDD_THIRD_PARTY_DIR")
@@ -136,6 +153,7 @@ class AasistDetector:
         self._device = device
         self._batch = batch_size
         self._model: Any = None
+        self.output_semantics = dict(OUTPUT_SEMANTICS)
         self.model_card = ModelCard(
             name=variant,
             version=f"clovaai/aasist@{UPSTREAM_COMMIT[:7]} ({_WEIGHT_FILES[variant]})",
@@ -181,16 +199,30 @@ class AasistDetector:
             raise ModelLoadError("weights_incompatible", "AASIST weights failed to load") from exc
         self._model = model.to(self._device).eval()
 
+    @property
+    def device(self) -> str:
+        return self._device
+
     def score_windows(self, windows: Sequence[NDArray[np.float32]]) -> list[float]:
         """Return raw spoof scores (softmax mass on class 0) for each 64,600-sample window."""
+        return [item.score for item in self.score_windows_detailed(windows)]
+
+    def score_windows_detailed(self, windows: Sequence[NDArray[np.float32]]) -> list[ScoredItem]:
+        """Like ``score_windows`` but also returns both logits and both class probabilities."""
         if self._model is None:
             raise ModelLoadError("not_loaded", "call load() before scoring")
         import torch  # type: ignore[import-not-found,unused-ignore]
 
-        scores: list[float] = []
+        out: list[ScoredItem] = []
         with torch.inference_mode():
             for i in range(0, len(windows), self._batch):
                 batch = torch.from_numpy(np.stack(windows[i : i + self._batch])).to(self._device)
                 _, logits = self._model(batch)
-                scores.extend(torch.softmax(logits, dim=1)[:, 0].cpu().tolist())
-        return [float(s) for s in scores]
+                probs = torch.softmax(logits, dim=1)
+                for lg, pr in zip(logits.cpu().tolist(), probs.cpu().tolist(), strict=True):
+                    out.append(ScoredItem(
+                        score=float(pr[SPOOF_INDEX]),
+                        logits={lab: float(v) for lab, v in zip(CLASS_LABELS, lg, strict=True)},
+                        probs={lab: float(v) for lab, v in zip(CLASS_LABELS, pr, strict=True)},
+                    ))
+        return out

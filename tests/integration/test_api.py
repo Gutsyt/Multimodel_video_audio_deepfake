@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import subprocess
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -24,65 +24,15 @@ pytest.importorskip("httpx")
 from fastapi.testclient import TestClient
 
 from avdd.api.app import create_app
-from avdd.api.models import DetectorBundle, DetectorManager, bundle_from_detectors
+from avdd.api.models import DetectorManager, bundle_from_detectors
 from avdd.api.settings import Settings
 from avdd.api.store import Store
 from avdd.video.faces import HaarFaceDetector
 from tests.conftest import requires_ffmpeg
+from tests.integration.helpers import OCTET, Api, doubles
 from tests.stubs import BlockingAudio, StubAudio, StubBoxes, StubFace
 
 pytestmark = requires_ffmpeg
-OCTET = {"Content-Type": "application/octet-stream"}
-
-
-class Api:
-    def __init__(self, client: TestClient, settings: Settings) -> None:
-        self.c, self.settings = client, settings
-
-    def upload(self, path: Path | bytes, **kw: Any) -> Any:
-        data = path.read_bytes() if isinstance(path, Path) else path
-        return self.c.post("/api/analyses", content=data, headers=OCTET, **kw)
-
-    def wait(self, job_id: str, timeout: float = 30.0) -> dict[str, Any]:
-        end = time.time() + timeout
-        while time.time() < end:
-            body = self.c.get(f"/api/analyses/{job_id}").json()
-            if body["status"] in ("completed", "failed"):
-                return body  # type: ignore[no-any-return]
-            time.sleep(0.05)
-        raise AssertionError("analysis did not finish in time")
-
-    def run(self, path: Path) -> dict[str, Any]:
-        r = self.upload(path)
-        assert r.status_code == 202, r.text
-        return self.wait(r.json()["id"])
-
-    def assert_clean(self) -> None:
-        assert list(self.settings.upload_dir.iterdir()) == [], "temporary upload files were left behind"
-
-
-@pytest.fixture()
-def make_api(tmp_path: Path) -> Iterator[Callable[..., Api]]:
-    clients: list[TestClient] = []
-
-    def make(detectors: DetectorBundle | None = None, data: str = "data", **overrides: Any) -> Api:
-        settings = Settings(data_dir=tmp_path / data, **overrides)
-        client = TestClient(create_app(settings, detectors))
-        client.__enter__()
-        clients.append(client)
-        return Api(client, settings)
-
-    yield make
-    for c in clients:
-        c.__exit__(None, None, None)
-
-
-def doubles(audio: Any = None, video: Any = None, **kw: Any) -> DetectorBundle:
-    audio = StubAudio(0.8) if audio is None else audio
-    video = StubFace(0.2) if video is None else video
-    return bundle_from_detectors(audio, video, StubBoxes(), **kw)
-
-
 @pytest.fixture(scope="module")
 def audio_only_mp4(tmp_path_factory: pytest.TempPathFactory, face_dir: Path) -> Path:
     out = tmp_path_factory.mktemp("audio_only") / "a.mp4"
@@ -101,6 +51,9 @@ def test_health_ready_capabilities(make_api: Callable[..., Api]) -> None:
     assert {m["role"]: m["state"] for m in cap["models"]} == {"audio": "loaded", "visual": "loaded"}
     assert all(m["card"]["is_test_fixture"] for m in cap["models"])
     assert cap["limits"]["max_duration_s"] == 60.0 and "mov" in cap["limits"]["accepted_containers"]
+    assert set(cap["limits"]["accepted"]) == {"video", "audio", "image"}
+    assert ".wav" in cap["limits"]["accepted"]["audio"]["extensions"]
+    assert ".png" in cap["limits"]["accepted"]["image"]["extensions"]
     assert "No training" in cap["evaluation_status"] and "deleted" in cap["retention"]
 
 
@@ -160,14 +113,16 @@ def test_video_without_audio_track(make_api: Callable[..., Api], face_dir: Path)
     res = make_api(doubles()).run(face_dir / "face_noaudio.mp4")["result"]
     a = res["modalities"]["audio"]
     assert a["status"] == "missing" and a["score"] is None
-    assert res["fusion"]["state"] == "single_modality" and res["fusion"]["fused_score"] == pytest.approx(0.2)
+    assert res["fusion"]["state"] == "single_modality" and res["fusion"]["fused_score"] is None
+    assert res["assessment"]["basis"] == "visual_only" and res["assessment"]["score"] == pytest.approx(0.2)
     assert res["fusion"]["excluded_modalities"] == {"audio": "missing"}
 
 
 def test_audio_only_media_has_missing_visual(make_api: Callable[..., Api], audio_only_mp4: Path) -> None:
     res = make_api(doubles()).run(audio_only_mp4)["result"]
     assert res["modalities"]["visual"]["status"] == "missing" and res["modalities"]["visual"]["score"] is None
-    assert res["fusion"]["state"] == "single_modality" and res["fusion"]["fused_score"] == pytest.approx(0.8)
+    assert res["fusion"]["state"] == "single_modality" and res["fusion"]["fused_score"] is None
+    assert res["assessment"]["basis"] == "audio_only" and res["assessment"]["score"] == pytest.approx(0.8)
 
 
 def test_silent_audio_is_unreliable_not_authentic(make_api: Callable[..., Api], face_dir: Path) -> None:
@@ -196,11 +151,13 @@ def test_corrupted_or_non_media_is_rejected_and_cleaned(make_api: Callable[..., 
     api.assert_clean()
 
 
-def test_wrong_media_type_is_rejected_by_content_not_extension(make_api: Callable[..., Api], media_dir: Path) -> None:
+def test_unsupported_but_readable_media_is_rejected_by_content_not_extension(
+    make_api: Callable[..., Api], kinds_dir: Path
+) -> None:
     api = make_api(doubles())
-    r = api.upload(media_dir / "audio_only.wav")
+    r = api.upload(kinds_dir / "animated.gif")
     assert r.status_code == 415 and r.json()["error"]["code"] == "unsupported_format"
-    assert r.json()["error"]["details"]["detected_container"] == "wav"
+    assert r.json()["error"]["details"]["detected_container"] == "gif"
     api.assert_clean()
 
 

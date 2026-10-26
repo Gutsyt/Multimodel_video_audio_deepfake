@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
@@ -16,14 +16,15 @@ from avdd.common.branch import BranchOutput
 from avdd.common.errors import AvddError
 from avdd.common.protocols import AudioWindowDetector, FaceImageDetector
 from avdd.common.types import Modality, ModalityEvidence, ModalityStatus
+from avdd.fusion.assessment import build_assessment
 from avdd.fusion.score_fusion import FusionConfig, fuse_scores
 from avdd.media.availability import availability_from_probe
 from avdd.media.probe import ProbeStatus, probe_media
-from avdd.video.branch import VideoBranchConfig, run_video_branch
+from avdd.video.branch import VideoBranchConfig, run_image_branch, run_video_branch
 from avdd.video.faces import FaceBoxDetector
 
 logger = logging.getLogger(__name__)
-SCHEMA_VERSION = "0.1"
+SCHEMA_VERSION = "0.2"
 STAGES: tuple[str, ...] = ("probing", "audio", "visual", "fusion")  # reported via on_stage
 
 INTERPRETATION: dict[str, Any] = {
@@ -35,7 +36,8 @@ INTERPRETATION: dict[str, Any] = {
     "validated_on_project_data": False,
     "flag_meaning": (
         "'Flagged' means only that a score crossed an unvalidated default threshold. 'Not flagged' is "
-        "not evidence of authenticity; genuine media can be flagged and manipulated media can evade detection."
+        "not evidence of authenticity; genuine media can be flagged and manipulated media can evade detection. "
+        "'Insufficient evidence' means no usable evidence was available, not that the media is authentic."
     ),
     "not_forensic_proof": "Outputs are research-prototype model scores, not legal or forensic proof.",
 }
@@ -49,8 +51,15 @@ class AnalysisConfig:
 
 
 def _absent(modality: Modality, status: ModalityStatus, reason: str) -> BranchOutput:
-    reasons = () if status is ModalityStatus.MISSING else (reason,)
+    reasons = (reason,) if reason else ()
     return BranchOutput(ModalityEvidence(modality, status, reasons=reasons), {})
+
+
+def _missing_reason(modality: Modality, kind: str | None) -> str:
+    """Why a stream is absent, in terms of what the user uploaded."""
+    if modality is Modality.AUDIO:
+        return "this image has no audio" if kind == "image" else "no audio track in this file"
+    return "this audio file has no video stream" if kind == "audio" else "no video stream in this file"
 
 
 def _modality_json(out: BranchOutput) -> dict[str, Any]:
@@ -88,21 +97,26 @@ def analyze_media(
         if status is ModalityStatus.CORRUPTED:
             results[modality] = _absent(modality, status, "container could not be parsed")
         elif status is ModalityStatus.MISSING:
-            results[modality] = _absent(modality, status, "")
+            results[modality] = _absent(modality, status, _missing_reason(modality, probe.kind))
         elif modality is Modality.AUDIO:
             if audio_detector is None:
                 results[modality] = _absent(modality, ModalityStatus.NOT_ANALYZED, "no audio model loaded")
             else:
                 notify("audio")
-                results[modality] = run_audio_branch(path, audio_detector, cfg.max_seconds)
+                results[modality] = run_audio_branch(path, audio_detector, cfg.max_seconds,
+                                                     cfg.fusion.flag_threshold)
         elif video_detector is None or face_detector is None:
             results[modality] = _absent(modality, ModalityStatus.NOT_ANALYZED, "no visual model loaded")
         else:
             notify("visual")
-            results[modality] = run_video_branch(path, video_detector, face_detector, cfg.video)
+            vcfg = replace(cfg.video, threshold=cfg.fusion.flag_threshold)
+            run = run_image_branch if probe.kind == "image" else run_video_branch
+            results[modality] = run(path, video_detector, face_detector, vcfg)
 
     notify("fusion")
-    fusion = fuse_scores([results[Modality.AUDIO].evidence, results[Modality.VISUAL].evidence], cfg.fusion)
+    evidence = [results[Modality.AUDIO].evidence, results[Modality.VISUAL].evidence]
+    fusion = fuse_scores(evidence, cfg.fusion)
+    assessment = build_assessment(evidence, fusion)
     cards = [d.model_card.to_dict() for d in (audio_detector, video_detector) if d is not None]
     media = {k: v for k, v in probe.to_dict().items() if k not in ("status", "error")}
     return {
@@ -111,8 +125,10 @@ def analyze_media(
         "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "outcome": outcome,
         "media": media,
-        "modalities": {m.value: _modality_json(o) for m, o in results.items()},
+        "modalities": {m.value: {**_modality_json(o), "decision": assessment["branch_decisions"][m.value]}
+                       for m, o in results.items()},
         "fusion": fusion.to_dict(),
+        "assessment": assessment,
         "models": cards,
         "is_test_fixture": any(c["is_test_fixture"] for c in cards),
         "interpretation": INTERPRETATION,

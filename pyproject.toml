@@ -21,6 +21,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+markers = ["real_models: runs the real pretrained models (plumbing/plausibility only; skipped when unavailable)"]
 
 [tool.ruff]
 line-length = 100

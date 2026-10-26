@@ -21,8 +21,14 @@ logger = logging.getLogger(__name__)
 
 def summarize(result: AnalysisResult) -> dict[str, object]:
     a, v = result.modalities.get("audio"), result.modalities.get("visual")
+    asm = result.assessment
     return {
         "duration_s": result.media.duration_s,
+        "media_kind": result.media.kind,
+        "assessment_status": asm.status if asm else None,
+        "basis": asm.basis if asm else None,
+        "audio_decision": a.decision if a else None,
+        "visual_decision": v.decision if v else None,
         "fusion_state": result.fusion.state,
         "fused_score": result.fusion.fused_score,
         "flagged": result.fusion.flagged_at_default_threshold,

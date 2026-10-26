@@ -84,3 +84,31 @@ def assess_audio(
     metrics = {"duration_s": round(duration, 3), "rms_dbfs": round(rms_db, 1),
                "active_frame_ratio": round(active_ratio, 3)}  # fmt: skip
     return reasons, metrics
+
+
+def audio_input_diagnostics(
+    wave: NDArray[np.float32], max_seconds: float, clip_level: float = 0.999
+) -> dict[str, Any]:
+    """Facts about the decoded waveform that can explain an odd detector output.
+
+    ``speech_band_ratio`` is a crude spectral heuristic (share of energy between 300 and 3400 Hz).
+    It is NOT a speech detector and is shown only as context.
+    """
+    n = int(wave.shape[0])
+    duration = n / SAMPLE_RATE
+    peak = float(np.max(np.abs(wave))) if n else 0.0
+    clipping = float(np.mean(np.abs(wave) >= clip_level)) if n else 0.0
+    spectrum = np.abs(np.fft.rfft(wave.astype(np.float64))) ** 2 if n else np.zeros(1)
+    freqs = np.fft.rfftfreq(max(n, 1), d=1.0 / SAMPLE_RATE)
+    total = float(spectrum.sum())
+    band = float(spectrum[(freqs >= 300.0) & (freqs <= 3400.0)].sum())
+    return {
+        "target_sample_rate": SAMPLE_RATE,
+        "channels_after_downmix": 1,
+        "normalization": "none (waveform passed to the model as decoded, range [-1, 1])",
+        "decoded_s": round(duration, 3),
+        "truncated_to_limit": duration >= max_seconds - 0.01,
+        "peak_abs": round(peak, 4),
+        "clipping_ratio": round(clipping, 5),
+        "speech_band_ratio": round(band / total, 3) if total > 0 else None,
+    }

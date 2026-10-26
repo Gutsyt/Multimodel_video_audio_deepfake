@@ -6,7 +6,18 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ALLOWED_CONTAINERS = frozenset({"mov", "mp4", "matroska", "webm", "avi"})
+ALLOWED_CONTAINERS = frozenset({"mov", "mp4", "matroska", "webm", "avi"})  # video (also audio-only m4a/webm/mkv)
+ALLOWED_AUDIO_CONTAINERS = frozenset({"wav", "mp3", "flac", "ogg", "aac"})
+ALLOWED_IMAGE_CONTAINERS = frozenset({"image2", "png_pipe", "jpeg_pipe", "webp_pipe", "bmp_pipe"})
+ALLOWED_IMAGE_CODECS = frozenset({"mjpeg", "png", "webp", "bmp"})
+
+# File extensions shown to users and used for client-side pre-checks only. The server never trusts
+# an extension or MIME type: it decides by parsing the content with ffprobe.
+ACCEPTED_EXTENSIONS: dict[str, tuple[str, ...]] = {
+    "video": (".mp4", ".mov", ".mkv", ".webm", ".avi"),
+    "audio": (".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac"),
+    "image": (".jpg", ".jpeg", ".png", ".webp", ".bmp"),
+}
 
 
 def _env_int(name: str, default: int) -> int:
@@ -33,6 +44,9 @@ class Settings:
     frontend_dist: Path | None = None
     enable_docs: bool = True
     allowed_containers: frozenset[str] = field(default=ALLOWED_CONTAINERS)
+    allowed_audio_containers: frozenset[str] = field(default=ALLOWED_AUDIO_CONTAINERS)
+    allowed_image_containers: frozenset[str] = field(default=ALLOWED_IMAGE_CONTAINERS)
+    max_image_pixels: int = 40_000_000
 
     @property
     def upload_dir(self) -> Path:
@@ -54,6 +68,7 @@ class Settings:
             max_pending=_env_int("AVDD_MAX_PENDING", 4),
             n_frames=_env_int("AVDD_FRAMES", 16),
             history_max_items=_env_int("AVDD_HISTORY_MAX", 200),
+            max_image_pixels=_env_int("AVDD_MAX_IMAGE_MEGAPIXELS", 40) * 1_000_000,
             audio_model=env("AVDD_AUDIO_MODEL", "AASIST") or "AASIST",
             video_model=env("AVDD_VIDEO_MODEL", "hf") or "hf",
             hf_model_id=env("AVDD_HF_MODEL") or None,

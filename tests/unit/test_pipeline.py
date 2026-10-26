@@ -36,13 +36,17 @@ def test_full_multimodal_result_shape_and_privacy(face_dir: Path) -> None:
 def test_video_without_audio_track(face_dir: Path) -> None:
     r = run(face_dir / "face_noaudio.mp4", StubAudio(0.9), StubFace(0.1))
     assert r["modalities"]["audio"]["status"] == "missing" and r["modalities"]["audio"]["score"] is None
-    assert r["fusion"]["state"] == "single_modality" and r["fusion"]["fused_score"] == pytest.approx(0.1)
+    assert r["fusion"]["state"] == "single_modality" and r["fusion"]["fused_score"] is None
+    assert r["assessment"]["basis"] == "visual_only" and r["assessment"]["score"] == pytest.approx(0.1)
+    assert r["modalities"]["audio"]["reasons"] == ["no audio track in this file"]
 
 
 def test_audio_only_file_has_missing_video(media_dir: Path) -> None:
     r = run(media_dir / "audio_only.wav", StubAudio(0.6), StubFace())
     assert r["modalities"]["visual"]["status"] == "missing"
-    assert r["fusion"]["state"] == "single_modality" and r["fusion"]["fused_score"] == pytest.approx(0.6)
+    assert r["fusion"]["state"] == "single_modality" and r["fusion"]["fused_score"] is None
+    assert r["assessment"]["basis"] == "audio_only" and r["assessment"]["score"] == pytest.approx(0.6)
+    assert r["modalities"]["visual"]["reasons"] == ["this audio file has no video stream"]
 
 
 @pytest.mark.parametrize("name", ["garbage.mp4", "truncated.mp4", "notes.txt"])
@@ -56,7 +60,8 @@ def test_unreadable_media_is_insufficient_evidence(media_dir: Path, name: str) -
 def test_unreliable_audio_leaves_visual_only(face_dir: Path) -> None:
     r = run(face_dir / "face_silent.mp4", StubAudio(0.99), StubFace(0.2))
     assert r["modalities"]["audio"]["status"] == "unreliable"
-    assert r["fusion"]["fused_score"] == pytest.approx(0.2)
+    assert r["fusion"]["fused_score"] is None and r["assessment"]["basis"] == "visual_only"
+    assert r["assessment"]["score"] == pytest.approx(0.2)
 
 
 def test_no_models_loaded_is_not_analyzed_not_authentic(face_dir: Path) -> None:
