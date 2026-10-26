@@ -1,50 +1,69 @@
+// UI rendering tests over HAND-WRITTEN fixtures (not real inference): they check what the interface
+// claims for each modality combination, never whether a detector is right.
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { ResultView } from "./ResultView";
-import { absent, available, fusion, result } from "../testFixtures";
+import { absent, audioOk, make, visualOk } from "../testFixtures";
 import { claimsAuthenticity } from "../testUtils";
+import { ResultView } from "./ResultView";
 
-const renderIt = (r: ReturnType<typeof result>) =>
-  render(<ResultView result={r} analysisId={"a".repeat(32)} reportHref="/r" onDelete={() => undefined} />);
+const text = (c: HTMLElement) => c.textContent ?? "";
 
-describe("ResultView (UI rendering rules, using test fixtures)", () => {
-  it("missing audio: no audio score is shown and absence is not called authentic", () => {
-    renderIt(result(absent("missing"), available(0.2), fusion({
-      state: "single_modality", fused_score: 0.2, excluded_modalities: { audio: "missing" },
-    })));
-    const audio = screen.getByRole("region", { name: /audio branch/i });
-    expect(within(audio).getByText("Not present in file")).toBeInTheDocument();
-    expect(within(audio).getByText(/not evidence that the media is genuine or manipulated/i)).toBeInTheDocument();
-    expect(within(audio).queryByText(/raw model score/i)).toBeNull();
-    expect(screen.getByText(/Not used: audio/)).toBeInTheDocument();
-    expect(claimsAuthenticity(document.body.textContent ?? "")).toBe(false);
+describe("ResultView missing-modality behaviour", () => {
+  it("video + audio + face: both branches and a fused score", () => {
+    const { container } = render(<ResultView result={make(audioOk(0.8), visualOk(0.6))} />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Flagged by the model");
+    expect(within(screen.getByLabelText("Fusion")).getByText("performed")).toBeInTheDocument();
+    expect(text(container)).toContain("Fused raw score");
+    expect(claimsAuthenticity(text(container))).toBe(false);
   });
 
-  it("insufficient evidence: no fused score bar and an explicit non-authenticity statement", () => {
-    renderIt(result(absent("corrupted", ["decode_failed"]), absent("unreliable", ["faces found in 0 of 16"]),
-      fusion({ state: "insufficient_evidence", fused_score: null, flagged_at_default_threshold: null, weights_used: {} })));
-    expect(screen.getByText("Insufficient evidence")).toBeInTheDocument();
-    expect(screen.queryByText(/raw fused score/i)).toBeNull();
-    expect(screen.getAllByText(/not evidence/i).length).toBeGreaterThan(0);
-    expect(claimsAuthenticity(document.body.textContent ?? "")).toBe(false);
+  it("video without usable audio: visual-only, no fused score, not called multimodal", () => {
+    const { container } = render(<ResultView result={make(absent("missing", ["no audio track in this file"]), visualOk(0.3))} />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Not flagged by the model");
+    expect(text(container)).toContain("Visual branch only");
+    expect(text(container)).toContain("single-branch result, not a multimodal one");
+    expect(within(screen.getByLabelText("Fusion")).getByText("not performed")).toBeInTheDocument();
+    expect(text(container)).not.toContain("Fused raw score");
+    expect(text(container)).toContain("no audio track in this file");
   });
 
-  it("available scores are labelled raw / not a probability, and calibration is 'no'", () => {
-    renderIt(result(available(0.7), available(0.3), fusion({ fused_score: 0.5, flagged_at_default_threshold: true })));
-    expect(screen.getAllByText(/not a probability/i).length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText(/no: scores are not probabilities/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/unvalidated default/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Flagged by the model at the default threshold/)).toBeInTheDocument();
+  it("video without a face: audio-only", () => {
+    const { container } = render(<ResultView result={make(audioOk(0.9), absent("unreliable", ["faces found in 0 of 16 sampled frames"]))} />);
+    expect(text(container)).toContain("Audio branch only");
+    expect(within(screen.getByLabelText(/visual branch/i)).getByText("Too unreliable to score")).toBeInTheDocument();
+    expect(text(container)).not.toContain("Fused raw score");
   });
 
-  it("shows the test-fixture banner when the result came from a stub", () => {
-    renderIt(result(available(0.7, true), available(0.3, true), fusion({}), true));
-    expect(screen.getByText(/TEST FIXTURE MODEL/)).toBeInTheDocument();
+  it("audio-only upload shows no visual score", () => {
+    const { container } = render(<ResultView result={make(audioOk(0.2), absent("missing", ["this audio file has no video stream"]), "audio")} />);
+    expect(text(container)).toContain("this audio file has no video stream");
+    expect(within(screen.getByLabelText(/visual branch/i)).getByText("not produced")).toBeInTheDocument();
   });
 
-  it("shows model limitations and attribution", () => {
-    renderIt(result(available(0.7), absent("missing"), fusion({ state: "single_modality" })));
-    expect(screen.getByText("limitation one")).toBeInTheDocument();
-    expect(screen.getByText("MIT")).toBeInTheDocument();
+  it("image-only upload shows the visual branch and no audio score", () => {
+    const { container } = render(<ResultView result={make(absent("missing", ["this image has no audio"]), visualOk(0.7, "image"), "image")} />);
+    expect(text(container)).toContain("this image has no audio");
+    expect(text(container)).toContain("Visual branch only");
+    expect(text(container)).toContain("n/a (still image)");
+  });
+
+  it("no usable modality: insufficient evidence, never authentic", () => {
+    const { container } = render(<ResultView result={make(absent("missing"), absent("unreliable", ["no face"]))} />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Insufficient evidence");
+    expect(text(container)).toContain("No usable evidence");
+    expect(claimsAuthenticity(text(container))).toBe(false);
+  });
+
+  it("never presents raw scores as probabilities or percentages", () => {
+    const { container } = render(<ResultView result={make(audioOk(0.8), visualOk(0.6))} />);
+    expect(text(container)).not.toMatch(/\b\d+(\.\d+)?\s?%\s*(probab|confiden|likel|fake|real)/i);
+    expect(text(container)).toContain("not a calibrated probability");
+    expect(text(container)).toContain("unvalidated");
+  });
+
+  it("surfaces the output semantics and a corrupted branch's reason", () => {
+    render(<ResultView result={make(absent("corrupted", ["decode_failed: audio stream could not be decoded"]), visualOk(0.4))} />);
+    expect(screen.getAllByText(/decode_failed/)[0]).toBeInTheDocument();
+    expect(screen.getByText(/softmax mass on the/)).toBeInTheDocument();
   });
 });

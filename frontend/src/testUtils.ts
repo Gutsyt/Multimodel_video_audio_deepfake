@@ -6,7 +6,7 @@ const CLAIM = /\b(is|are|looks?|appears?|seems?|was|were)\s+(authentic|real|genu
 export function claimsAuthenticity(text: string): boolean {
   const withoutNegations = text
     .split(/(?<=[.!?])\s+/)
-    .filter((sentence) => !/\bnot evidence\b|\bneither evidence\b|\bnot proof\b/i.test(sentence))
+    .filter((sentence) => !/\bnot evidence\b|\bneither evidence\b|\bnot proof\b|\bnot mean\b/i.test(sentence))
     .join(" ");
   return CLAIM.test(withoutNegations);
 }

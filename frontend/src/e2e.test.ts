@@ -32,7 +32,7 @@ describe.skipIf(!url || !video)(`e2e against a running backend (${expectMode})`,
       expect(r.is_test_fixture).toBe(true);
       expect(r.fusion.state).toBe("multimodal");
       expect(r.modalities.audio!.segments!.length).toBeGreaterThan(0);
-      expect(r.modalities.visual!.frames!.some((f) => f.score !== null && f.t_s >= 0)).toBe(true);
+      expect(r.modalities.visual!.frames!.some((f) => f.score !== null && (f.t_s ?? 0) >= 0)).toBe(true);
     } else {
       expect(r.is_test_fixture).toBe(false);
       expect(r.modalities.audio!.status).toBe("available");

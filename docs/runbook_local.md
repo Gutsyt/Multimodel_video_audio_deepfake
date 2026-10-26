@@ -104,8 +104,8 @@ npx vitest run src/e2e.test.ts
 ## H. What is and is not verified
 | Item | Status |
 |---|---|
-| Backend: 25 integration tests (24 with test doubles, 1 with real AASIST weights) | **Run here** (Linux, Python 3.12) |
-| Frontend: type check, 22 UI tests, production build, real-HTTP client test vs. doubles server and vs. real-AASIST server | **Run here** (Node 22) |
+| Backend: integration tests with test doubles, plus real-model smoke tests in `tests/real` | **Run here** (Linux, Python 3.12) |
+| Frontend: type check, 38 UI tests, production build, real-HTTP client test vs. doubles server and vs. real-AASIST server | **Run here** (Node 22) |
 | `curl` upload to a real server with real AASIST weights; structured errors; no leftover temp files; restart sweep | **Run here** |
 | Any command on Windows PowerShell; Python 3.10/3.11; Node 20 | **Not run** |
 | Hugging Face ViT download and inference (visual branch with a real model) | **Not run** (unreachable from my sandbox): needs your probe |
@@ -118,3 +118,11 @@ npx vitest run src/e2e.test.ts
 - [ ] Screenshots: idle, in-progress, a result with a missing/unreliable modality, an error
 - [ ] Report numbers come only from saved outputs (`pytest_output.txt`, `result.json`); no accuracy/F1/AUC claimed
 - [ ] No videos, `.env`, or `app_data/` in the submission
+
+
+## Optional modalities, audio-only and image-only uploads (added 26 Oct 2026)
+- Accepted by content (not by extension): video (MP4, MOV, MKV, WebM, AVI), audio (WAV, MP3, FLAC, OGG, M4A, AAC) and images (JPEG, PNG, WebP, BMP). Animated GIF and TIFF are rejected.
+- Each analysis reports per branch whether it ran, and why not: no audio track, silent audio, no face found, corrupted stream. With one usable branch the result is that branch's own score and decision, with no fused score. With none the result is `insufficient_evidence`.
+- Inspect a file branch by branch: `python scripts/diagnose_media.py .\clip.mp4 --sensitivity` (see `docs/false_positive_investigation.md`).
+- Tests: mocked-detector tests are in `tests/unit` and `tests/integration`; `tests/real` runs the real models (plumbing only) and is skipped when torch or the Hugging Face download is unavailable. Deselect with `-m "not real_models"`.
+- Frontend: `frontend/.env.example` documents `VITE_API_BASE`. Deployment notes: `docs/deployment.md`.
