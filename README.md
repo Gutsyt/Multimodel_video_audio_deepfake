@@ -81,6 +81,7 @@ Upload (raw body) -> ffprobe validation by content (kind: video / audio / image)
 The uploaded file exists only as a randomly named temporary file while its job runs and is deleted when the job ends (success or failure); leftovers are swept at startup. Only the result JSON is stored, locally, until you delete it (per record, or all finished records, from History). Nothing is sent to third parties except the one-time model download from Hugging Face. The server has no authentication: do not expose it to untrusted networks (see `docs/deployment.md`).
 
 ## Documents
+`docs/USER_GUIDE.md` (run it locally and test every feature) ·
 `docs/runbook_local.md` · `docs/false_positive_investigation.md` · `docs/deployment.md` · `docs/prototype_plan.md` · `docs/model_investigation.md` · `docs/evaluation_plan.md` · `docs/report_outline.md` · `ATTRIBUTIONS.md`.
 
 ## Remaining limitations
