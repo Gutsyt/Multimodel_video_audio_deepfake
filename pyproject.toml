@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "avdd"
+version = "0.0.1"
+description = "Multimodal audio-visual deepfake detection research framework (Phase 0 foundations)"
+requires-python = ">=3.10"
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+video = ["opencv-python-headless>=4.9,<5"]
+torch = ["torch"]  # install the CPU build; see docs/runbook_local.md
+hf = ["transformers", "pillow", "safetensors"]
+api = ["fastapi", "uvicorn"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["third_party"]
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src", "scripts"]
+
+[[tool.mypy.overrides]]
+module = ["uvicorn", "uvicorn.*", "torch", "torch.*", "transformers", "transformers.*", "cv2", "cv2.*", "PIL", "PIL.*", "skimage", "skimage.*"]
+ignore_missing_imports = true
