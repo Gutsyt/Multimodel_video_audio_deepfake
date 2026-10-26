@@ -87,7 +87,7 @@ export function FaceMap({ frames, width, height, threshold }: { frames: FrameEvi
         <figure key={i}>
           <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Face box ${f.t_s != null ? "at " + f.t_s.toFixed(1) + " s" : "in image"}`}>
             <rect x={f.face_box!.x} y={f.face_box!.y} width={f.face_box!.w} height={f.face_box!.h} fill="none" strokeWidth={Math.max(width, height) / 40}
-              stroke={f.score == null ? "#8191b8" : f.score >= threshold ? "#f4a62a" : "#3b79ff"} />
+              stroke={f.score == null ? "var(--ink-3)" : f.score >= threshold ? "var(--flag)" : "var(--visual)"} />
           </svg>
           <span>{f.t_s != null ? `${f.t_s.toFixed(1)} s` : "image"}</span>
         </figure>

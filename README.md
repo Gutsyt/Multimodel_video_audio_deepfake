@@ -74,7 +74,7 @@ npm run build
 Known, pre-existing: `tests/unit/test_inventory.py` and `scripts/inspect_dataset.py` import `avdd.data.inventory`, which was never committed (the `data/` rule in `.gitignore` excludes `src/avdd/data/`); the test is skipped, and `ruff` reports the file-mode warning EXE001 for scripts with a shebang, and `mypy` reports two errors (that missing module and an untyped `from_pretrained` call).
 
 ## Architecture
-`src/avdd/{media,audio,video,fusion,pipeline,api,common}`; `third_party/aasist` (vendored, MIT); `frontend/` (React 19 + Vite + TypeScript, no router or chart library; charts are hand-built SVG from real API data); `scripts/`; `tests/`.
+`src/avdd/{media,audio,video,fusion,pipeline,api,common}`; `third_party/aasist` (vendored, MIT); `frontend/` (React 19 + Vite + TypeScript, no router or chart library; charts are hand-built SVG from real API data; light stone-and-graphite palette with forest green, bronze and vermilion, no blue); `scripts/`; `tests/`.
 Upload (raw body) -> ffprobe validation by content (kind: video / audio / image) -> queued job -> `analyze_media` (audio branch, visual branch, fusion, assessment) -> result in SQLite (no media, no file name) -> UI.
 
 ## Privacy and retention

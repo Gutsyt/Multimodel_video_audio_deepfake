@@ -75,13 +75,13 @@ export function RunDots({ items, threshold = 0.5 }: { items: AnalysisSummary[]; 
         {runs.map((s, i) => (
           <g key={s.id}>
             {s.audio_score != null && <circle cx={x(i) - 5} cy={y(s.audio_score)} r="4.5" fill="var(--signal)"><title>{`Audio ${formatScore(s.audio_score)}`}</title></circle>}
-            {s.visual_score != null && <rect x={x(i) + 1} y={y(s.visual_score) - 4} width="9" height="9" rx="1.5" fill="var(--signal-hi)"><title>{`Visual ${formatScore(s.visual_score)}`}</title></rect>}
+            {s.visual_score != null && <rect x={x(i) + 1} y={y(s.visual_score) - 4} width="9" height="9" rx="1.5" fill="var(--visual)"><title>{`Visual ${formatScore(s.visual_score)}`}</title></rect>}
             {s.fusion_state === "multimodal" && s.fused_score != null && <circle cx={x(i)} cy={y(s.fused_score)} r="7" fill="none" stroke="var(--flag)" strokeWidth="2"><title>{`Fused ${formatScore(s.fused_score)}`}</title></circle>}
           </g>
         ))}
         <text x={L} y={H - 4}>oldest</text><text x={W - R} y={H - 4} textAnchor="end">newest</text>
       </svg>
-      <div className="legend"><span><i className="k-sig" style={{ borderRadius: 5 }} />audio branch</span><span><i style={{ background: "var(--signal-hi)" }} />visual branch</span><span><i style={{ border: "2px solid var(--flag)", borderRadius: 5 }} />fused (two branches only)</span><span className="faint">raw scores, not probabilities</span></div>
+      <div className="legend"><span><i className="k-sig" style={{ borderRadius: 5 }} />audio branch</span><span><i className="k-vis" />visual branch</span><span><i style={{ border: "2px solid var(--flag)", borderRadius: 5 }} />fused (two branches only)</span><span className="faint">raw scores, not probabilities</span></div>
     </div>
   );
 }

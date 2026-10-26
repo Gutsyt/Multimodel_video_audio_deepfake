@@ -75,7 +75,7 @@ export function AnalyzePage() {
       {!file && (
         <div className={`drop${over ? " over" : ""}`} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
           onDrop={(e) => { e.preventDefault(); setOver(false); pick(e.dataTransfer.files[0]); }}>
-          <svg className="glyph" viewBox="0 0 74 74" aria-hidden="true"><g fill="none" strokeWidth="3" strokeLinecap="round"><path stroke="#3b79ff" d="M12 30v14M22 22v30M32 14v46" /><rect stroke="#f4a62a" x="44" y="22" width="18" height="18" rx="3" /><path stroke="#f4a62a" d="M44 50h18M44 58h11" /></g></svg>
+          <svg className="glyph" viewBox="0 0 74 74" aria-hidden="true"><g fill="none" strokeWidth="3" strokeLinecap="round"><path stroke="var(--signal)" d="M12 30v14M22 22v30M32 14v46" /><rect stroke="var(--flag)" x="44" y="22" width="18" height="18" rx="3" /><path stroke="var(--flag)" d="M44 50h18M44 58h11" /></g></svg>
           <div><h2>Drop a file here</h2><p className="muted" style={{ marginTop: 4 }}>or choose one from your device</p></div>
           <button className="btn primary" onClick={() => input.current?.click()}><Icon name="analyze" /> Choose file</button>
           <div className="kinds" aria-label="Accepted formats">

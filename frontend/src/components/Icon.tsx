@@ -35,11 +35,11 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
 export function BrandMark({ size = 34 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-      <rect x="1" y="1" width="38" height="38" rx="10" fill="#0e1730" stroke="#22305a" />
-      <g stroke="#3b79ff" strokeWidth="2.6" strokeLinecap="round">
+      <rect x="1" y="1" width="38" height="38" rx="10" fill="var(--surface)" stroke="var(--line)" />
+      <g stroke="var(--signal)" strokeWidth="2.6" strokeLinecap="round">
         <path d="M8 17v6" /><path d="M13 12v16" /><path d="M18 8v24" />
       </g>
-      <g fill="none" stroke="#f4a62a" strokeWidth="1.8">
+      <g fill="none" stroke="var(--flag)" strokeWidth="1.8">
         <rect x="23" y="11" width="10" height="10" rx="1.5" /><path d="M23 26h10M23 30h6" />
       </g>
     </svg>

@@ -14,7 +14,7 @@ function KV({ data }: { data: Record<string, string | number | boolean | null> |
 
 function Verdict({ r }: { r: AnalysisResult }) {
   const a = assessmentOf(r);
-  const glyph = a.status === "flagged" ? <path d="M16 56V10M16 10h32l-6 12 6 12H16" stroke="#f4a62a" /> : a.status === "not_flagged" ? <><circle cx="32" cy="32" r="22" stroke="#8da2c8" /><path d="M22 32h20" stroke="#8da2c8" /></> : <><circle cx="32" cy="32" r="22" stroke="#8191b8" strokeDasharray="4 5" /><path d="M26 26a6 6 0 1 1 8 5c-2 1-2 3-2 4M32 44h.01" stroke="#8191b8" /></>;
+  const glyph = a.status === "flagged" ? <path d="M16 56V10M16 10h32l-6 12 6 12H16" stroke="var(--flag)" /> : a.status === "not_flagged" ? <><circle cx="32" cy="32" r="22" stroke="var(--steel)" /><path d="M22 32h20" stroke="var(--steel)" /></> : <><circle cx="32" cy="32" r="22" stroke="var(--ink-3)" strokeDasharray="4 5" /><path d="M26 26a6 6 0 1 1 8 5c-2 1-2 3-2 4M32 44h.01" stroke="var(--ink-3)" /></>;
   return (
     <section className={`verdict ${a.status}`} aria-labelledby="verdict-h">
       <svg width="72" height="72" viewBox="0 0 64 64" fill="none" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{glyph}</svg>
