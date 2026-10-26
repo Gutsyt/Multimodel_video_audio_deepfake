@@ -31,7 +31,9 @@ target-version = "py310"
 [tool.mypy]
 python_version = "3.10"
 strict = true
+# scripts/inspect_dataset.py imports avdd.data.inventory, which was never committed (see README); skip it
 files = ["src", "scripts"]
+exclude = ["scripts/inspect_dataset.py"]
 
 [[tool.mypy.overrides]]
 module = ["uvicorn", "uvicorn.*", "torch", "torch.*", "transformers", "transformers.*", "cv2", "cv2.*", "PIL", "PIL.*", "skimage", "skimage.*"]

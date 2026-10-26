@@ -72,7 +72,8 @@ class HfImageDetector:
         except ImportError as exc:
             raise ModelLoadError("deps_missing", "torch/transformers are not installed") from exc
         try:
-            self._processor = AutoImageProcessor.from_pretrained(self.model_id, revision=self.revision)
+            self._processor = AutoImageProcessor.from_pretrained(  # type: ignore[no-untyped-call,unused-ignore]
+                self.model_id, revision=self.revision)
             model = AutoModelForImageClassification.from_pretrained(self.model_id, revision=self.revision)
         except Exception as exc:
             raise ModelLoadError("download_failed", f"could not load {self.model_id}: {type(exc).__name__}") from exc
