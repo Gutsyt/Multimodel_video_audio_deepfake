@@ -76,3 +76,11 @@ def test_threshold_is_the_configured_one_and_reported() -> None:
 
 def test_score_exactly_at_threshold_is_flagged() -> None:
     assert assess(ok(A, 0.5), gone(V))["status"] == "flagged"
+
+
+def test_branch_disagreement_is_explicit_and_changes_no_decision() -> None:
+    a = assess(ok(A, 0.67), ok(V, 0.37))  # fused 0.52: flagged by the unvalidated rule although visual alone is not
+    assert a["status"] == "flagged" and a["branches_agree"] is False
+    assert "disagree" in a["summary"] and a["branch_decisions"] == {"audio": "flagged", "visual": "not_flagged"}
+    assert assess(ok(A, 0.9), ok(V, 0.8))["branches_agree"] is True
+    assert assess(ok(A, 0.9), gone(V))["branches_agree"] is None  # not applicable to a single branch

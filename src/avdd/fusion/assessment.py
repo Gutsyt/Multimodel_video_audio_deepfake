@@ -71,10 +71,17 @@ def build_assessment(evidence: Sequence[ModalityEvidence], fusion: FusionResult)
         decision = Decision(decisions[only.modality.value])
     else:
         basis, score, score_kind, decision = Basis.NONE, None, None, Decision.INSUFFICIENT_EVIDENCE
+    used_flags = {v for v in decisions.values() if v is not None}
+    agree = (len(used_flags) == 1) if basis is Basis.MULTIMODAL else None
+    summary = _SUMMARY[(decision, basis)]
+    if agree is False:
+        summary += (" The two branches disagree at the threshold, so this rests on an unvalidated average of "
+                    "them; read each branch separately.")
     return {
         "status": decision.value,
         "basis": basis.value,
-        "summary": _SUMMARY[(decision, basis)],
+        "summary": summary,
+        "branches_agree": agree,
         "score": None if score is None else round(score, 4),
         "score_kind": score_kind,
         "threshold": fusion.threshold,

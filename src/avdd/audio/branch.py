@@ -52,11 +52,14 @@ def _window_stats(scores: list[float], threshold: float) -> dict[str, Any]:
 
 def _tail_note(n_samples: int, n_windows: int) -> str:
     full, rem = divmod(n_samples, WINDOW_SAMPLES)
+    if n_samples < WINDOW_SAMPLES:
+        return "clip shorter than one window: looped to full length (upstream AASIST protocol)"
     if rem == 0:
-        return "audio length is an exact multiple of the window; nothing tiled or dropped"
+        return "audio length is an exact multiple of the window; nothing overlapped or dropped"
     if n_windows == full:
         return f"a trailing piece of {rem / SAMPLE_RATE:.1f} s (under 1 s) was dropped"
-    return f"the last window holds {rem / SAMPLE_RATE:.1f} s of real audio, tiled to full length"
+    return (f"the last window is the final {WINDOW_SAMPLES / SAMPLE_RATE:.1f} s of the clip and overlaps the "
+            f"previous one by {(WINDOW_SAMPLES - rem) / SAMPLE_RATE:.1f} s; no audio was looped")
 
 
 def run_audio_branch(

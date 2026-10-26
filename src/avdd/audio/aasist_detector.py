@@ -173,6 +173,12 @@ class AasistDetector:
                     "(about 43-44%) on in-the-wild audio versus <1% in-domain; not reproduced here."
                 ),
                 "Meaningful only for speech: in our smoke test, pure noise scored as spoof.",
+                (
+                    "Our own check (scripts/evaluate_labelled.py): on 73 genuine LibriSpeech read-speech clips "
+                    "the clip-level score reached 0.5 for 1 clip. Only genuine audio was available, so this is "
+                    "specificity on clean read speech; sensitivity to spoofed audio was NOT measured, and "
+                    "historical or noisy recordings behaved differently (a 1963 speech scored 0.99 in two windows)."
+                ),
                 "Scores are raw softmax outputs: uncalibrated and not validated on this project's data.",
             ),
         )

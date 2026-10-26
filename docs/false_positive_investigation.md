@@ -48,3 +48,27 @@ No threshold, weight, score or model was changed to make any example pass.
 3. A comparison of aggregation rules (mean vs median vs max) and of fusion rules on the same labelled data, plus calibration if probabilities are to be shown.
 
 See `docs/evaluation_plan.md`. Until that is done the application must keep presenting scores as raw, uncalibrated model outputs and "flagged" as "crossed an unvalidated default threshold".
+
+## 6. Follow-up with labelled samples (26 Oct 2026, later)
+Public labelled samples were used: **73 genuine LibriSpeech read-speech clips** (human recordings), **180 real LFW photos**, **120 real FFHQ faces** and **100 StyleGAN faces** (the "140k real and fake faces" data, fake half). They are small and from specific domains, so the numbers describe those samples only. `scripts/evaluate_labelled.py` reproduces them on your own labelled files.
+
+**Ruled out**
+- Vendored AASIST code and both weight files are byte-identical to upstream.
+- Audio codec: the same 40 genuine clips flagged 1/40 as FLAC, AAC 128k, AAC 64k and MP3 64k.
+- Window-edge clicks: fading window edges by 10 or 50 ms changed nothing.
+- Silence: windows with more leading/trailing silence were flagged *less*, not more.
+
+**Found and fixed: tiled trailing windows (a logic flaw)**
+- The old code looped a short trailing piece of a longer clip to fill a 4.04 s window. On the genuine clips, natural windows reached 0.5 in 4/63 cases but tiled windows in **20/41**, and that window counted equally in the mean.
+- Clip-level result on 73 genuine clips: 3 flagged before, **1 after**, mean score 0.141 to 0.088. Through the live API on 10 clips that were previously affected: 3 flagged before, 1 after.
+- The trailing window is now the last 4.04 s of the clip (real audio, overlapping the previous window). Clips shorter than one window are still looped, as upstream does for short utterances.
+- Caveat: the window is counted once more in the mean although it adds less than a full window of new audio.
+
+**Found, not fixable by logic**
+- Remaining audio flags: 10 of 120 natural windows (8%) on clean read speech are scored as spoof; they are mostly windows cut through the middle of speech. That is the model's own error rate on this sample. A 1963 speech recording scored 0.99 in two windows (domain shift).
+- **Visual branch is at chance on matched data**: AUC 0.50 to 0.55 for real FFHQ vs StyleGAN faces. Roughly 43 to 47% of real FFHQ faces score at or above 0.5 (12/28 as an image and as H.264 video), 94% of real LFW photos did on the whole image, and heavy H.264 compression (CRF 38) raised the real-face flag rate to 18/29. Which side of 0.5 a face lands on depends mainly on crop margin and image quality (13% to 52% of real faces flagged across margins), not on whether it is fake. The first LFW-vs-StyleGAN comparison (AUC 0.13) was a data-domain confound; the matched comparison removes it. **A visual-branch flag is therefore weak evidence, and a genuine video being flagged by it is expected.**
+- Haar false boxes: 3 of 15 face-free images (coins, moon, star field) produced a small "face". A persistent false box in a face-free video could pass the frame-count gate.
+
+**Decision logic made explicit**
+- The overall status is unchanged (fused score at or above the threshold), but when the two branches land on opposite sides the assessment now carries `branches_agree: false` and the summary says it rests on an unvalidated average. Example from the live API: audio 0.67 (flagged) with visual 0.37 (not flagged) fused to 0.52 and was reported flagged.
+- No threshold, weight, crop margin or score was tuned. Without labelled spoofed audio and a visual model that separates the classes there is no operating point to choose.

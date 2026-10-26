@@ -55,7 +55,7 @@ export interface Fusion {
   calibrated: boolean; notes: string[];
 }
 export interface Assessment {
-  status: AssessmentStatus; basis: Basis; summary: string; score: number | null; score_kind: string | null;
+  status: AssessmentStatus; basis: Basis; summary: string; branches_agree?: boolean | null; score: number | null; score_kind: string | null;
   threshold: number; threshold_validated: boolean; branch_decisions: Record<string, string | null>;
   modalities_used: string[]; calibrated: boolean; not_authenticity_note: string;
 }

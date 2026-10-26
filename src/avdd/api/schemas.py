@@ -128,6 +128,7 @@ class AssessmentOut(BaseModel):
     status: Literal["flagged", "not_flagged", "insufficient_evidence"]
     basis: Literal["multimodal", "audio_only", "visual_only", "none"]
     summary: str
+    branches_agree: bool | None = None  # multimodal only: do both branches land on the same side of the threshold
     score: float | None = None
     score_kind: str | None = None
     threshold: float

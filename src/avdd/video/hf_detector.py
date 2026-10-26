@@ -54,6 +54,12 @@ class HfImageDetector:
                     "degradation on low-resolution or compressed images."
                 ),
                 "Vendor-reported metrics (e.g. 'precision-92.12' tag) are not reproduced here.",
+                (
+                    "Our own check (scripts/evaluate_labelled.py, small samples): on 120 real FFHQ faces vs 100 "
+                    "StyleGAN faces of the same size and framing the ranking AUC was 0.50 to 0.55, i.e. chance, "
+                    "while 13% to 52% of the REAL faces reached 0.5 depending on crop margin; 94% of 180 real LFW "
+                    "photos reached 0.5 on the whole image. A flag from this branch is weak evidence at best."
+                ),
                 "Scores are raw softmax outputs: uncalibrated and not validated on this project's data.",
             ),
         )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -18,24 +17,39 @@ class AudioWindow:
     start_s: float
     end_s: float
     samples: NDArray[np.float32]
+    synthetic: bool = False  # True when the window contains looped (tiled) audio that never existed
 
 
 def make_windows(
     wave: NDArray[np.float32], window: int = WINDOW_SAMPLES, min_tail: int = SAMPLE_RATE
 ) -> list[AudioWindow]:
-    """Non-overlapping windows. A short final piece is tiled to full length (as upstream
-    AASIST evaluation does); a trailing piece shorter than ``min_tail`` is dropped unless
-    it is the only piece."""
+    """Windows made only of audio that is really in the file, except for very short clips.
+
+    * Clip at least one window long: non-overlapping full windows, plus (when the leftover is at
+      least ``min_tail`` samples) one final window that is the LAST ``window`` samples of the clip,
+      so it overlaps the previous window instead of containing invented audio. A leftover shorter
+      than ``min_tail`` is dropped.
+    * Clip shorter than one window: tiled to full length, which is what the upstream AASIST
+      evaluation does for short utterances (marked ``synthetic``).
+
+    Why not tile a trailing piece of a longer clip: on 73 genuine LibriSpeech clips, tiled trailing
+    windows were scored as spoof 49% of the time (20 of 41), against 6% (4 of 63) for natural windows.
+    Looping a mid-speech fragment builds a repeating signal with hard seams that the detector reads
+    as an artefact, and that window then counted as much as any real one in the mean.
+    """
     n = int(wave.shape[0])
-    out: list[AudioWindow] = []
-    pos = 0
-    while pos < n:
-        seg = wave[pos : pos + window]
-        if seg.shape[0] < window:
-            if out and seg.shape[0] < min_tail:
-                break
-            seg = np.tile(seg, math.ceil(window / seg.shape[0]))[:window]
-        out.append(AudioWindow(pos / SAMPLE_RATE, min(pos + window, n) / SAMPLE_RATE,
-                               np.ascontiguousarray(seg, dtype=np.float32)))  # fmt: skip
-        pos += window
+    if n == 0:
+        return []
+    if n < window:
+        seg = np.tile(wave, -(-window // n))[:window]
+        return [AudioWindow(0.0, n / SAMPLE_RATE, np.ascontiguousarray(seg, dtype=np.float32), True)]
+    out = [
+        AudioWindow(pos / SAMPLE_RATE, (pos + window) / SAMPLE_RATE,
+                    np.ascontiguousarray(wave[pos : pos + window], dtype=np.float32))
+        for pos in range(0, n - window + 1, window)
+    ]  # fmt: skip
+    leftover = n - (n // window) * window
+    if leftover >= min_tail:
+        out.append(AudioWindow((n - window) / SAMPLE_RATE, n / SAMPLE_RATE,
+                               np.ascontiguousarray(wave[-window:], dtype=np.float32)))  # fmt: skip
     return out

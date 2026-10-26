@@ -44,12 +44,26 @@ def test_usability_gate() -> None:
 
 def test_windowing() -> None:
     mk = lambda n: np.ones(n, dtype=np.float32)
-    one = make_windows(mk(SAMPLE_RATE))  # 1 s: tiled to a full window
+    one = make_windows(mk(SAMPLE_RATE))  # 1 s clip: shorter than a window, looped (upstream protocol)
     assert len(one) == 1 and one[0].samples.shape == (WINDOW_SAMPLES,) and one[0].end_s == pytest.approx(1.0)
-    ten = make_windows(mk(10 * SAMPLE_RATE))
-    assert [w.start_s for w in ten] == pytest.approx([0.0, 4.0375, 8.075])
-    assert len(make_windows(mk(WINDOW_SAMPLES + 8000))) == 1  # tail < 1 s dropped
+    assert one[0].synthetic is True
+    assert len(make_windows(mk(WINDOW_SAMPLES + 8000))) == 1  # leftover < 1 s dropped
     assert make_windows(mk(0)) == []
+
+
+def test_trailing_piece_of_a_longer_clip_is_real_audio_not_a_loop() -> None:
+    """Regression: tiled trailing windows were scored as spoof ~8x more often on genuine speech."""
+    wave = np.arange(10 * SAMPLE_RATE, dtype=np.float32)  # every sample unique, so any looping is visible
+    ten = make_windows(wave)
+    assert [w.start_s for w in ten] == pytest.approx([0.0, 4.0375, 5.9625])
+    assert not any(w.synthetic for w in ten)
+    last = ten[-1]
+    assert last.end_s == pytest.approx(10.0)
+    assert np.array_equal(last.samples, wave[-WINDOW_SAMPLES:])  # the final 4.04 s as they really are
+    for w in ten:  # no window contains a repeated sample
+        assert len(np.unique(w.samples)) == WINDOW_SAMPLES
+    exact = make_windows(wave[: 2 * WINDOW_SAMPLES])
+    assert len(exact) == 2 and exact[-1].end_s == pytest.approx(2 * WINDOW_SAMPLES / SAMPLE_RATE)
 
 
 def test_branch_available_with_segments(face_dir: Path) -> None:
