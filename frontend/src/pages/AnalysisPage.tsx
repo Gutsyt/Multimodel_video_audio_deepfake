@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiRequestError, deleteAnalysis, getAnalysis, reportUrl, waitForAnalysis, type AnalysisResult, type AnalysisStatus, type ApiErrorBody, type ModalityResult } from "../api";
 import { useAppData } from "../AppData";
 import { EvidenceScale, Lanes, MediaStage, usePeaks, zoneOf, type Th } from "../components/Evidence";
+import { Compare, Filmstrip, shareCard } from "../components/Extras";
 import { Icon } from "../components/Icon";
 import { useToast } from "../components/Toasts";
 import { BASIS_LABEL, KIND_LABEL, STATUS_LABEL, VERDICT_LABEL, describeError, formatTime, formatWhen } from "../lib/format";
@@ -78,6 +79,11 @@ function Result({ id, r }: { id: string; r: AnalysisResult }) {
     catch { toast.push("Clipboard is not available here.", "error"); }
   }
 
+  async function share() {
+    try { toast.push((await shareCard(r)) === "shared" ? "Shared." : "Card saved as PNG.", "success"); }
+    catch (e) { if (!(e instanceof DOMException && e.name === "AbortError")) toast.push("Could not make the card.", "error"); }
+  }
+
   return (
     <div className={`result t-${a.verdict}`}>
       <header className="result-head">
@@ -91,6 +97,7 @@ function Result({ id, r }: { id: string; r: AnalysisResult }) {
         </div>
         <div className="row actions">
           <a className="btn primary" href="#/"><Icon name="analyze" size={16} /> Check another</a>
+          <button className="btn" onClick={() => void share()}>Share card</button>
           <button className="btn" onClick={() => void copy()}>Copy summary</button>
           <a className="btn" href={reportUrl(id)}><Icon name="download" size={16} /> JSON</a>
           <button className="btn" onClick={() => window.print()}><Icon name="print" size={16} /> PDF</button>
@@ -112,6 +119,7 @@ function Result({ id, r }: { id: string; r: AnalysisResult }) {
           {media && kind !== "audio" && <MediaStage url={media.url} kind={kind === "image" ? "image" : "video"} frames={vis.frames ?? []} tv={tv} frameSize={frameSize} videoRef={video} onTime={onTime} />}
           {kind === "audio" && media && <audio className="audio-player" src={media.url} controls onTimeUpdate={(e) => setPlayhead(e.currentTarget.currentTime)} ref={(el) => { (video as React.MutableRefObject<unknown>).current = el; }} />}
           {kind !== "image" && dur > 0 && <Lanes dur={dur} frames={vis.frames ?? []} segments={aud.segments ?? []} tv={tv} ta={ta} peaks={peaks} playhead={playhead} onSeek={seek} />}
+          {media && kind !== "audio" && <div className="span-all"><Filmstrip url={media.url} kind={kind === "image" ? "image" : "video"} frames={vis.frames ?? []} tv={tv} onSeek={seek} /></div>}
           {!media && <p className="hint">Analyse a file in this tab to replay it here with the detected face outlined frame by frame. The server deleted its copy after scoring.</p>}
         </section>
       )}
@@ -123,6 +131,8 @@ function Result({ id, r }: { id: string; r: AnalysisResult }) {
         <Check name="Face" m={vis} t={tv} unit="frames" />
         <Check name="Voice" m={aud} t={ta} unit="windows" />
       </div>
+
+      <Compare id={id} r={r} />
 
       <dl className="file-facts">
         <div><dt>Container</dt><dd>{r.media.container?.split(",")[0] ?? "–"}</dd></div>
@@ -150,7 +160,7 @@ function Check({ name, m, t, unit }: { name: string; m: ModalityResult; t: Th; u
           {unit === "frames" ? <div><dt>Frames with a face</dt><dd>{m.n_face_frames} / {m.n_frames_sampled}</dd></div> : <div><dt>Speech windows</dt><dd>{m.n_windows} × 4 s</dd></div>}
           <div><dt>Model</dt><dd>{m.model?.name}</dd></div>
         </dl>
-      ) : <p className="hint">{m.reasons[0] ?? "Nothing to analyse."} That says nothing about authenticity.</p>}
+      ) : <p className="hint">{(m.reasons[0] ?? "Nothing to analyse").replace(/\.?$/, ".")} That says nothing about authenticity.</p>}
       {m.score != null && m.reasons.length > 0 && <p className="hint">{m.reasons.join(" · ")}</p>}
     </section>
   );

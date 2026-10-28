@@ -109,6 +109,7 @@ export function Lanes({ dur, frames, segments, tv, ta, peaks, playhead, onSeek }
           {cross}
         </svg>
         <span className="lane-label">Voice</span>
+        {segments.length || peaks ? (
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="lane">
           {peaks && <path className="wave" d={peaks.map((p, i) => `M${(i / peaks.length) * W},${H / 2 - p * (H / 2 - 4)}V${H / 2 + p * (H / 2 - 4)}`).join("")} />}
           {thr(ta)}
@@ -116,9 +117,9 @@ export function Lanes({ dur, frames, segments, tv, ta, peaks, playhead, onSeek }
             <motion.rect key={i} x={x(s.start_s) + 1} width={Math.max(2, x(s.end_s) - x(s.start_s) - 2)} rx="3" className={`seg ${zoneOf(s.score, ta)}`}
               initial={{ y: H - 6, height: 0 }} animate={{ y: y(s.score), height: H - 6 - y(s.score) }} transition={{ duration: 0.6, ease: EASE, delay: 0.6 + i * 0.05 }} />
           ))}
-          {!segments.length && <text x={W / 2} y={H / 2} className="lane-empty">no speech analysed</text>}
           {cross}
         </svg>
+        ) : <div className="lane-empty">No speech analysed</div>}
         <span />
         <div className="ticks mono">{[0, 0.25, 0.5, 0.75, 1].map((f) => <span key={f} style={{ left: `${f * 100}%` }}>{clock(f * dur)}</span>)}</div>
       </div>
