@@ -50,6 +50,7 @@ The training inputs pass through **exactly the inference code**: `sample_frames`
 ## How it was trained
 
 ```bash
+python scripts/download_data.py DATA                                    # ~10 GB, see docs/RUNBOOK.md
 python scripts/train_heads.py embed-visual --data DATA --cache CACHE   # frozen CLIP features per face crop
 python scripts/train_heads.py embed-audio  --data DATA --cache CACHE   # frozen XLS-R features per 4 s window
 python scripts/train_heads.py fit --cache CACHE                         # heads, calibration, thresholds
@@ -84,6 +85,8 @@ Inference on your machine: about 4 GB RAM for both backbones. A 10 s video takes
 <!-- RESULTS:END -->
 
 ## Run it
+
+**Step-by-step training, evaluation and a full feature checklist: [`docs/RUNBOOK.md`](docs/RUNBOOK.md).**
 
 Prerequisites: Python 3.10+, Node 20+, and **ffmpeg + ffprobe on PATH**.
 

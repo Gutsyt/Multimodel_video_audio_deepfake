@@ -14,7 +14,7 @@ video = ["opencv-python-headless>=4.9,<5"]
 torch = ["torch"]  # install the CPU build; see README
 hf = ["transformers>=4.45", "pillow", "safetensors"]
 api = ["fastapi", "uvicorn"]
-train = ["scikit-learn", "pyarrow", "soundfile", "huggingface_hub"]
+train = ["scikit-learn", "pyarrow", "soundfile", "huggingface_hub", "httpx", "matplotlib"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

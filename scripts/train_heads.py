@@ -164,19 +164,19 @@ def embed_stream(items: Iterator[tuple[str, Any, int, str]], det: Any, layers: t
         save(current)
 
 
-def embed_visual(data: Path, cache: Path, frames_per_video: int) -> None:
+def embed_visual(data: Path, cache: Path, frames_per_video: int, device: str = "cpu") -> None:
     from avdd.video.clip_detector import ClipFaceDetector
     from avdd.video.faces import YuNetFaceDetector
 
-    det = ClipFaceDetector(with_head=False)
+    det = ClipFaceDetector(device=device, with_head=False)
     det.load()
     embed_stream(visual_items(data, YuNetFaceDetector(), frames_per_video), det, VIS_LAYERS, cache, "vis")
 
 
-def embed_audio(data: Path, cache: Path, caps: dict[str, int]) -> None:
+def embed_audio(data: Path, cache: Path, caps: dict[str, int], device: str = "cpu") -> None:
     from avdd.audio.ssl_detector import SslAudioDetector
 
-    det = SslAudioDetector(with_head=False)
+    det = SslAudioDetector(device=device, with_head=False)
     det.load()
     embed_stream(audio_items(data, caps), det, AUD_LAYERS, cache, "aud")
 
@@ -297,13 +297,14 @@ def main() -> None:
     ap.add_argument("--data", type=Path)
     ap.add_argument("--cache", type=Path, required=True)
     ap.add_argument("--frames", type=int, default=2)
+    ap.add_argument("--device", default="cpu", help="cpu | cuda | mps")
     ap.add_argument("--audio-caps", default="ASVspoof2019_LA=2000,ASVspoof5=2000,InTheWild=4500")
     a = ap.parse_args()
     a.cache.mkdir(parents=True, exist_ok=True)
     if a.cmd == "embed-visual":
-        embed_visual(a.data, a.cache, a.frames)
+        embed_visual(a.data, a.cache, a.frames, a.device)
     elif a.cmd == "embed-audio":
-        embed_audio(a.data, a.cache, {k: int(v) for k, v in (kv.split("=") for kv in a.audio_caps.split(","))})
+        embed_audio(a.data, a.cache, {k: int(v) for k, v in (kv.split("=") for kv in a.audio_caps.split(","))}, a.device)
     else:
         fit(a.cache)
 
