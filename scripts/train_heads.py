@@ -17,7 +17,9 @@ import io
 import json
 import random
 import tarfile
+import time
 from collections import defaultdict
+from collections.abc import Iterator
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -49,25 +51,24 @@ def _crop_or_whole(img_bgr: Any, fd: Any) -> Any:
     return crop if crop is not None else np.ascontiguousarray(img_bgr[:, :, ::-1])
 
 
-def visual_items(data: Path, fd: Any, frames_per_video: int) -> dict[str, list[tuple[Any, int, str]]]:
+def visual_items(data: Path, fd: Any, frames_per_video: int) -> Iterator[tuple[str, Any, int, str]]:
+    """Yield (source, face crop, label, group) one at a time, so memory stays flat."""
     import cv2
     import pyarrow.parquet as pq
 
     from avdd.video.frames import sample_frames
 
-    src: dict[str, list[tuple[Any, int, str]]] = defaultdict(list)
     for p in sorted((data / "ff").rglob("*.mp4")):
         label = int("/fake/" in str(p))
-        stem = p.stem
-        group = "ff_" + (stem.split("__")[0].split("_")[0] if label else stem)
+        group = "ff_" + (p.stem.split("__")[0].split("_")[0] if label else p.stem)
         for fr in sample_frames(p, frames_per_video):
             if (c := _faces(fr.image_bgr, fd)) is not None:
-                src["ff"].append((c, label, group))
+                yield "ff", c, label, group
     for tf in sorted((data / "WildDeepfake").rglob("*.tar.gz")):
         label = int("fake_" in tf.parent.name)
         part = "wdf_test" if tf.parent.name.endswith("_test") else "wdf"
-        seqs: dict[str, list[tarfile.TarInfo]] = defaultdict(list)
         with tarfile.open(tf) as t:
+            seqs: dict[str, list[tarfile.TarInfo]] = defaultdict(list)
             for m in t.getmembers():
                 if m.isfile() and m.name.endswith(".png"):
                     seqs[str(Path(m.name).parent)].append(m)
@@ -77,47 +78,27 @@ def visual_items(data: Path, fd: Any, frames_per_video: int) -> dict[str, list[t
                     f = t.extractfile(m)
                     img = cv2.imdecode(np.frombuffer(f.read(), np.uint8), cv2.IMREAD_COLOR) if f else None
                     if img is not None:
-                        src[part].append((_crop_or_whole(img, fd), label, f"wdf_{tf.stem}_{seq}"))
+                        yield part, _crop_or_whole(img, fd), label, f"wdf_{tf.stem}_{seq}"
     for pf in sorted((data / "celeb-df-image-dataset" / "data").glob("*.parquet")):
         part = "celeb_test" if pf.name.startswith("test") else "celeb"
-        tbl = pq.read_table(pf)
-        rows = list(range(tbl.num_rows))
-        real = [i for i in rows if tbl.column("label")[i].as_py() == 1]
-        fake = rng.sample([i for i in rows if tbl.column("label")[i].as_py() == 0], 3 * len(real) // 2 + 60)
-        for i in real + fake:
-            im = tbl.column("image")[i].as_py()
-            img = cv2.imdecode(np.frombuffer(im["bytes"], np.uint8), cv2.IMREAD_COLOR)
-            if img is not None:
-                name = im["path"] or str(i)
-                # celeb-df labels: 0 = Fake, 1 = Real
-                src[part].append((_crop_or_whole(img, fd), 1 - tbl.column("label")[i].as_py(), "cdf_" + name.rsplit("_", 1)[0]))
-    return src
+        keep_fake = 0.03 if part == "celeb_test" else 0.02  # all reals are kept; fakes outnumber them ~80:1
+        for batch in pq.ParquetFile(pf).iter_batches(batch_size=256):
+            for im, lab in zip(batch.column("image").to_pylist(), batch.column("label").to_pylist(), strict=True):
+                if lab == 0 and rng.random() > keep_fake:
+                    continue
+                img = cv2.imdecode(np.frombuffer(im["bytes"], np.uint8), cv2.IMREAD_COLOR)
+                if img is not None:
+                    name = im["path"] or "x"
+                    # celeb-df labels: 0 = Fake, 1 = Real
+                    yield part, _crop_or_whole(img, fd), 1 - lab, "cdf_" + name.rsplit("_", 1)[0]
 
 
-def embed_visual(data: Path, cache: Path, frames_per_video: int) -> None:
-    from avdd.video.clip_detector import ClipFaceDetector
-    from avdd.video.faces import YuNetFaceDetector
-
-    det = ClipFaceDetector(with_head=False)
-    det.load()
-    for name, items in visual_items(data, YuNetFaceDetector(), frames_per_video).items():
-        out = cache / f"vis_{name}.npz"
-        if out.exists():
-            continue
-        feats = det.embed([c for c, _, _ in items], VIS_LAYERS)
-        np.savez(out, y=np.array([y for _, y, _ in items]), g=np.array([g for _, _, g in items]),
-                 **{f"l{k}": v.astype(np.float16) for k, v in feats.items()})  # type: ignore[arg-type]  # fmt: skip
-        print("saved", out.name, len(items), flush=True)
-
-
-# ---------------------------------------------------------------- audio
-def audio_items(data: Path, per_source: dict[str, int]) -> dict[str, list[tuple[Any, int, str]]]:
+def audio_items(data: Path, per_source: dict[str, int]) -> Iterator[tuple[str, Any, int, str]]:
     import pyarrow.parquet as pq
     import soundfile as sf
 
     from avdd.audio.windows import make_windows
 
-    src: dict[str, list[tuple[Any, int, str]]] = defaultdict(list)
     for name, cap in per_source.items():
         shards = sorted((data / name / "data").glob("test-*.parquet"))
         rows = [(s, i) for s in shards for i in range(pq.ParquetFile(s).metadata.num_rows)]
@@ -126,16 +107,70 @@ def audio_items(data: Path, per_source: dict[str, int]) -> dict[str, list[tuple[
         for s, i in rows[:cap]:
             by_shard[s].append(i)
         for s, idx in by_shard.items():
-            tbl = pq.read_table(s).take(idx)
-            for a, y, n in zip(tbl.column("audio").to_pylist(), tbl.column("label").to_pylist(),
-                               tbl.column("notes").to_pylist(), strict=True):  # fmt: skip
-                wave, sr = sf.read(io.BytesIO(a["bytes"]), dtype="float32")
-                if sr != 16_000 or wave.ndim != 1 or len(wave) < 8000:
-                    continue
-                notes = json.loads(n)
-                spk = notes.get("speaker") or notes.get("speaker_id") or "?"
-                src[name].append((make_windows(wave)[0].samples, int(y), f"{name}_{spk}"))
-    return src
+            pf = pq.ParquetFile(s)
+            want, base = set(idx), 0
+            for batch in pf.iter_batches(batch_size=128):
+                for j, (a, y, n) in enumerate(zip(batch.column("audio").to_pylist(), batch.column("label").to_pylist(),
+                                                   batch.column("notes").to_pylist(), strict=True)):  # fmt: skip
+                    if base + j not in want:
+                        continue
+                    wave, sr = sf.read(io.BytesIO(a["bytes"]), dtype="float32")
+                    if sr != 16_000 or wave.ndim != 1 or len(wave) < 8000:
+                        continue
+                    notes = json.loads(n)
+                    spk = notes.get("speaker") or notes.get("speaker_id") or "?"
+                    yield name, make_windows(wave)[0].samples, int(y), f"{name}_{spk}"
+                base += batch.num_rows
+
+
+def embed_stream(items: Iterator[tuple[str, Any, int, str]], det: Any, layers: tuple[int, ...], cache: Path, prefix: str) -> None:
+    """Embed in batches of 32 as items arrive; save one .npz per source when it ends."""
+    acc: dict[str, dict[str, list[Any]]] = defaultdict(lambda: defaultdict(list))
+    buf: list[tuple[str, Any, int, str]] = []
+    n, t0 = 0, time.time()
+
+    def flush() -> None:
+        nonlocal n
+        if not buf:
+            return
+        feats = det.embed([x for _, x, _, _ in buf], layers)
+        for i, (src, _, y, g) in enumerate(buf):
+            acc[src]["y"].append(y)
+            acc[src]["g"].append(g)
+            for k in layers:
+                acc[src][f"l{k}"].append(feats[k][i].astype(np.float16))
+        n += len(buf)
+        buf.clear()
+        print(f"{prefix}: {n} embedded ({n / (time.time() - t0):.2f}/s)", flush=True)
+
+    def save(src: str) -> None:
+        d = acc.pop(src)
+        np.savez(cache / f"{prefix}_{src}.npz", **{k: np.array(v) for k, v in d.items()})  # type: ignore[arg-type]
+        print("saved", f"{prefix}_{src}", len(d["y"]), flush=True)
+
+    current = None
+    for item in items:
+        if current is not None and item[0] != current:
+            flush()
+            save(current)
+        current = item[0]
+        if (cache / f"{prefix}_{current}.npz").exists():
+            continue
+        buf.append(item)
+        if len(buf) >= 32:
+            flush()
+    flush()
+    if current is not None and current in acc:
+        save(current)
+
+
+def embed_visual(data: Path, cache: Path, frames_per_video: int) -> None:
+    from avdd.video.clip_detector import ClipFaceDetector
+    from avdd.video.faces import YuNetFaceDetector
+
+    det = ClipFaceDetector(with_head=False)
+    det.load()
+    embed_stream(visual_items(data, YuNetFaceDetector(), frames_per_video), det, VIS_LAYERS, cache, "vis")
 
 
 def embed_audio(data: Path, cache: Path, caps: dict[str, int]) -> None:
@@ -143,14 +178,7 @@ def embed_audio(data: Path, cache: Path, caps: dict[str, int]) -> None:
 
     det = SslAudioDetector(with_head=False)
     det.load()
-    for name, items in audio_items(data, caps).items():
-        out = cache / f"aud_{name}.npz"
-        if out.exists():
-            continue
-        feats = det.embed([w for w, _, _ in items], AUD_LAYERS)
-        np.savez(out, y=np.array([y for _, y, _ in items]), g=np.array([g for _, _, g in items]),
-                 **{f"l{k}": v.astype(np.float16) for k, v in feats.items()})  # type: ignore[arg-type]  # fmt: skip
-        print("saved", out.name, len(items), flush=True)
+    embed_stream(audio_items(data, caps), det, AUD_LAYERS, cache, "aud")
 
 
 # ---------------------------------------------------------------- fit
@@ -263,8 +291,8 @@ def main() -> None:
     ap.add_argument("cmd", choices=["embed-visual", "embed-audio", "fit"])
     ap.add_argument("--data", type=Path)
     ap.add_argument("--cache", type=Path, required=True)
-    ap.add_argument("--frames", type=int, default=3)
-    ap.add_argument("--audio-caps", default="ASVspoof2019_LA=3000,ASVspoof5=3000,InTheWild=7000")
+    ap.add_argument("--frames", type=int, default=2)
+    ap.add_argument("--audio-caps", default="ASVspoof2019_LA=2000,ASVspoof5=2000,InTheWild=4500")
     a = ap.parse_args()
     a.cache.mkdir(parents=True, exist_ok=True)
     if a.cmd == "embed-visual":
