@@ -6,6 +6,7 @@ import { Icon } from "../components/Icon";
 import { rise, stagger } from "../components/Shell";
 import { useToast } from "../components/Toasts";
 import { KIND_LABEL, describeError, formatBytes } from "../lib/format";
+import { rememberMedia } from "../lib/session";
 import { acceptAttr, acceptedExtensions, validateFile } from "../lib/validate";
 
 type Phase = "upload" | "queued" | "probing" | "audio" | "visual" | "verdict";
@@ -51,6 +52,7 @@ export function AnalyzePage() {
     setView({ s: "busy", phase: "upload", progress: 0 });
     try {
       const created = await uploadMedia(file, (l, t) => setView({ s: "busy", phase: "upload", progress: l / Math.max(1, t) }), ctl.signal);
+      rememberMedia(created.id, file);
       setView({ s: "busy", phase: "queued", progress: 1 });
       const final = await waitForAnalysis(created.id, (st) => {
         if (st.status === "processing" && st.stage) setView({ s: "busy", phase: (st.stage as Phase), progress: 1 });
@@ -70,7 +72,6 @@ export function AnalyzePage() {
   return (
     <section className="hero">
       <motion.div className="hero-copy" variants={stagger} initial="hidden" animate="show">
-        <motion.span className="eyebrow" variants={rise}>Audio-visual deepfake check</motion.span>
         <motion.h1 className="display" variants={rise}>Is it <em>real</em>,<br />or is it made?</motion.h1>
         <motion.p className="lead" variants={rise}>
           Drop a video, a voice clip or a photo. The face and the voice are checked separately by models trained on

@@ -22,7 +22,7 @@ export function HistoryPage() {
   return (
     <div style={{ display: "grid", gap: 24 }}>
       <div className="row" style={{ justifyContent: "space-between", alignItems: "end" }}>
-        <div style={{ display: "grid", gap: 8 }}><span className="eyebrow">Stored on this server</span><h1 className="h2" style={{ fontSize: 44 }}>History</h1></div>
+        <h1 className="h2" style={{ fontSize: 44 }}>History</h1>
         {history.length > 0 && <button className="btn ghost danger small" onClick={() => { if (confirm("Delete all finished analyses?")) void act(deleteAllAnalyses(), "History cleared."); }}><Icon name="trash" size={14} /> Clear all</button>}
       </div>
       <div className="filters" role="group" aria-label="Filter by verdict">

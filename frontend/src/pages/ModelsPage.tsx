@@ -16,7 +16,6 @@ export function ModelsPage() {
   return (
     <motion.div style={{ display: "grid", gap: 28 }} variants={stagger} initial="hidden" animate="show">
       <motion.div variants={rise} style={{ display: "grid", gap: 10 }}>
-        <span className="eyebrow">How it decides</span>
         <h1 className="h2" style={{ fontSize: 44 }}>Two independent checks, measured.</h1>
         <p className="lead">Each check is a large pretrained network that stays frozen, plus a small classifier trained on labelled real and fake media. Every number below was measured on data the classifier never saw.</p>
       </motion.div>
@@ -39,8 +38,8 @@ function ModelCard({ m }: { m: ModelStatus }) {
   return (
     <motion.section variants={rise} className="card pad" style={{ display: "grid", gap: 20, alignContent: "start" }}>
       <div style={{ display: "grid", gap: 6 }}>
-        <span className="eyebrow">{m.role === "visual" ? "Face check" : "Voice check"} · {m.state}</span>
-        <h2 style={{ font: "600 19px var(--sans)" }}>{c?.name ?? "Not loaded"}</h2>
+        <h2 style={{ font: "600 19px var(--sans)" }}>{m.role === "visual" ? "Face check" : "Voice check"}</h2>
+        <p className="muted" style={{ fontSize: 14 }}>{c?.name ?? "Not loaded"} · {m.state}</p>
         {c && <p className="faint" style={{ fontSize: 13 }}>Trained on {c.trained_on}</p>}
       </div>
       {head && met && (
