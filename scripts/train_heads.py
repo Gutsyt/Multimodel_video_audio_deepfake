@@ -220,6 +220,7 @@ def fit_head(cache: Path, kind: str, train: list[str], tests: dict[str, list[str
         return x[keep], y[keep], g[keep]
 
     best: dict[str, Any] = {}
+    search: list[dict[str, float]] = []
     for layer in layers:
         xt, yt, _ = split(train, layer, "train")
         xv, yv, gv = split(train, layer, "val")
@@ -229,6 +230,7 @@ def fit_head(cache: Path, kind: str, train: list[str], tests: dict[str, list[str
             lv = clf.decision_function((xv - mean) / scale)
             auc = _metrics(lv, yv)["auc"]
             print(f"{kind} layer {layer} C {c}: val auc {auc}", flush=True)
+            search.append({"layer": layer, "C": c, "val_auc": auc})
             if auc > best.get("auc", 0):
                 best = {"auc": auc, "layer": layer, "C": c, "clf": clf, "mean": mean, "scale": scale, "lv": lv, "yv": yv, "gv": gv}
 
@@ -242,10 +244,13 @@ def fit_head(cache: Path, kind: str, train: list[str], tests: dict[str, list[str
 
     pv = 1 / (1 + np.exp(-(a * best["lv"] + b)))
     gp, gy = _group_scores(pv, best["yv"], best["gv"]) if grouped else (pv, best["yv"])
-    t_fake = float(np.quantile(gp[gy == 0], 1 - fpr_target))  # at most fpr_target of genuine flagged
+    # Strictly above the (1 - fpr_target) quantile of genuine scores, so ties cannot flag more genuine media
+    # than the target; never below 0.5, so nothing the calibrated model thinks is more likely real is flagged.
+    t_fake = max(0.5, float(np.nextafter(np.quantile(gp[gy == 0], 1 - fpr_target), 1.0)))
     t_real = float(min(np.quantile(gp[gy == 0], 0.90), t_fake - 1e-3))
     report = {"layer": best["layer"], "C": best["C"], "t_fake": round(t_fake, 4), "t_real": round(t_real, 4),
-              "validation": _metrics(gp, gy, t_fake, t_real), "tests": {}}  # fmt: skip
+              "validation": _metrics(gp, gy, t_fake, t_real), "tests": {}, "search": search,
+              "n_train": int(len(xt))}  # fmt: skip
     for tname, names in tests.items():
         x, y, g = _load(cache, names, best["layer"])
         if tname == "in_domain_test":

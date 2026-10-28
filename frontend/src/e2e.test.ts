@@ -1,5 +1,5 @@
 // End-to-end wiring test: the REAL api.ts client against a RUNNING backend over real HTTP.
-// Skipped unless AVDD_E2E_URL and AVDD_E2E_VIDEO are set (see docs/runbook_local.md). The backend
+// Skipped unless AVDD_E2E_URL and AVDD_E2E_VIDEO are set (see README). The backend
 // decides what is real: AVDD_E2E_EXPECT=doubles means the server was started with test doubles.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
