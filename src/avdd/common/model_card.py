@@ -10,7 +10,7 @@ from avdd.common.types import Modality
 
 @dataclass(frozen=True)
 class ModelCard:
-    """Provenance and limitations of a pretrained model used for INFERENCE ONLY."""
+    """Provenance, measured metrics and limitations of a detector."""
 
     name: str
     version: str
@@ -21,6 +21,7 @@ class ModelCard:
     trained_on: str
     limitations: tuple[str, ...]
     is_test_fixture: bool = False
+    metrics: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)

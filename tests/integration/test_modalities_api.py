@@ -22,14 +22,14 @@ pytest.importorskip("httpx")
 pytest.importorskip("skimage")
 
 from avdd.api.models import bundle_from_detectors
-from avdd.video.faces import HaarFaceDetector
+from avdd.video.faces import YuNetFaceDetector
 from tests.conftest import requires_ffmpeg
 from tests.integration.helpers import Api, doubles
 from tests.stubs import StubAudio, StubFace
 
 pytestmark = requires_ffmpeg
 
-HAAR = bundle_from_detectors(StubAudio(0.8), StubFace(0.2), HaarFaceDetector())
+HAAR = bundle_from_detectors(StubAudio(0.8), StubFace(0.2), YuNetFaceDetector())
 
 
 def result(api: Api, path: Path) -> dict:  # type: ignore[type-arg]
@@ -48,11 +48,9 @@ def test_audio_only_upload_runs_the_audio_branch_alone(make_api: Callable[..., A
     assert res["modalities"]["audio"]["score"] == pytest.approx(0.8)
     v = res["modalities"]["visual"]
     assert v["status"] == "missing" and v["score"] is None and v["reasons"] == ["this audio file has no video stream"]
-    assert res["fusion"]["state"] == "single_modality" and res["fusion"]["fused_score"] is None
-    assert res["fusion"]["fusion_performed"] is False and res["fusion"]["weights_used"] == {}
     a = res["assessment"]
-    assert (a["status"], a["basis"], a["score_kind"]) == ("flagged", "audio_only", "audio_branch_raw_score")
-    assert res["modalities"]["audio"]["decision"] == "flagged" and v["decision"] is None
+    assert (a["verdict"], a["basis"], a["score"]) == ("likely_manipulated", "audio_only", pytest.approx(0.8))
+    assert res["modalities"]["audio"]["verdict"] == "likely_manipulated" and v["verdict"] is None
     api.assert_clean()
 
 
@@ -64,7 +62,7 @@ def test_wav_is_accepted_as_audio(make_api: Callable[..., Api], media_dir: Path)
 # ------------------------------------------------------------ image-only uploads
 @pytest.mark.parametrize("name", ["face.jpg", "face.png", "face.webp", "face.bmp"])
 def test_image_only_upload_runs_the_visual_branch_alone(make_api: Callable[..., Api], kinds_dir: Path, name: str) -> None:
-    api = make_api(bundle_from_detectors(StubAudio(0.9), StubFace(0.2), HaarFaceDetector()))
+    api = make_api(bundle_from_detectors(StubAudio(0.9), StubFace(0.2), YuNetFaceDetector()))
     res = result(api, kinds_dir / name)
     assert res["media"]["kind"] == "image"
     a = res["modalities"]["audio"]
@@ -72,8 +70,7 @@ def test_image_only_upload_runs_the_visual_branch_alone(make_api: Callable[..., 
     v = res["modalities"]["visual"]
     assert v["status"] == "available" and v["source"] == "image" and v["score"] == pytest.approx(0.2)
     assert v["n_frames_sampled"] == 1 and v["frames"][0]["t_s"] is None
-    assert res["fusion"]["fused_score"] is None
-    assert res["assessment"]["status"] == "not_flagged" and res["assessment"]["basis"] == "visual_only"
+    assert res["assessment"]["verdict"] == "likely_authentic" and res["assessment"]["basis"] == "visual_only"
     api.assert_clean()
 
 
@@ -82,8 +79,7 @@ def test_image_without_a_detectable_face_is_insufficient_evidence(make_api: Call
     res = result(api, kinds_dir / "noface.jpg")
     v = res["modalities"]["visual"]
     assert v["status"] == "unreliable" and v["score"] is None and "no face" in v["reasons"][0]
-    assert res["assessment"]["status"] == "insufficient_evidence" and res["assessment"]["score"] is None
-    assert res["fusion"]["flagged_at_default_threshold"] is None
+    assert res["assessment"]["verdict"] == "insufficient_evidence" and res["assessment"]["score"] is None
     api.assert_clean()
 
 
@@ -110,8 +106,7 @@ def test_video_with_audio_but_no_face_runs_audio_only(make_api: Callable[..., Ap
     v = res["modalities"]["visual"]
     assert v["status"] == "unreliable" and v["score"] is None and "need at least" in v["reasons"][0]
     assert res["modalities"]["audio"]["status"] == "available"
-    assert res["fusion"]["state"] == "single_modality" and res["fusion"]["fused_score"] is None
-    assert res["assessment"]["basis"] == "audio_only" and res["assessment"]["status"] == "flagged"
+    assert res["assessment"]["basis"] == "audio_only" and res["assessment"]["verdict"] == "likely_manipulated"
     api.assert_clean()
 
 
@@ -119,35 +114,29 @@ def test_video_with_face_but_no_audio_runs_visual_only(make_api: Callable[..., A
     res = result(make_api(doubles()), face_dir / "face_noaudio.mp4")
     assert res["modalities"]["audio"]["status"] == "missing"
     assert res["modalities"]["audio"]["reasons"] == ["no audio track in this file"]
-    assert res["assessment"]["basis"] == "visual_only" and res["fusion"]["fused_score"] is None
+    assert res["assessment"]["basis"] == "visual_only"
     assert res["assessment"]["score"] == pytest.approx(0.2)
 
 
 def test_video_with_silent_audio_track_runs_visual_only(make_api: Callable[..., Api], face_dir: Path) -> None:
     res = result(make_api(doubles()), face_dir / "face_silent.mp4")
     a = res["modalities"]["audio"]
-    assert a["status"] == "unreliable" and a["score"] is None and a["decision"] is None
+    assert a["status"] == "unreliable" and a["score"] is None and a["verdict"] is None
     assert res["assessment"]["basis"] == "visual_only"
 
 
-def test_video_with_audio_and_face_fuses_both_by_the_documented_rule(make_api: Callable[..., Api], face_dir: Path) -> None:
-    res = result(make_api(doubles()), face_dir / "face_audio.mp4")
-    f, a = res["fusion"], res["assessment"]
-    assert f["state"] == "multimodal" and f["fusion_performed"] is True
-    assert f["fused_score"] == pytest.approx(0.5) and f["weights_used"] == {"audio": 0.5, "visual": 0.5}
-    assert f["weights_validated"] is False and f["threshold_validated"] is False and f["calibrated"] is False
-    assert "weights renormalised" in f["method"] and "unvalidated" in f["rule"] and "equal-weight" in f["rule"]
-    assert (a["status"], a["basis"], a["score_kind"]) == ("flagged", "multimodal", "fused_raw_score")
-    assert a["branch_decisions"] == {"audio": "flagged", "visual": "not_flagged"}
+def test_video_with_audio_and_face_uses_both_branches(make_api: Callable[..., Api], face_dir: Path) -> None:
+    a = result(make_api(doubles()), face_dir / "face_audio.mp4")["assessment"]
+    assert (a["verdict"], a["basis"]) == ("likely_manipulated", "multimodal")  # one manipulated branch is enough
+    assert a["branch_verdicts"] == {"audio": "likely_manipulated", "visual": "likely_authentic"}
 
 
 def test_video_with_neither_usable_audio_nor_face_is_insufficient_evidence(make_api: Callable[..., Api], media_dir: Path) -> None:
     api = make_api(HAAR)
     res = result(api, media_dir / "video_only.mp4")
-    assert res["assessment"]["status"] == "insufficient_evidence" and res["assessment"]["basis"] == "none"
-    assert res["fusion"]["fused_score"] is None
-    assert all(m["score"] is None and m["decision"] is None for m in res["modalities"].values())
-    assert "not evidence that the media is authentic" in res["assessment"]["summary"]
+    assert res["assessment"]["verdict"] == "insufficient_evidence" and res["assessment"]["basis"] == "none"
+    assert all(m["score"] is None and m["verdict"] is None for m in res["modalities"].values())
+    assert "says nothing about authenticity" in res["assessment"]["summary"]
 
 
 # ------------------------------------------------------------ validation errors
@@ -179,9 +168,8 @@ def test_history_summary_reports_kind_and_decisions(make_api: Callable[..., Api]
     api = make_api(doubles())
     result(api, kinds_dir / "tone.flac")
     item = api.c.get("/api/analyses").json()["items"][0]
-    assert item["media_kind"] == "audio" and item["assessment_status"] == "flagged" and item["basis"] == "audio_only"
-    assert item["audio_decision"] == "flagged" and item["visual_decision"] is None
-    assert item["fused_score"] is None and item["audio_score"] == pytest.approx(0.8)
+    assert item["media_kind"] == "audio" and item["verdict"] == "likely_manipulated" and item["basis"] == "audio_only"
+    assert item["score"] == pytest.approx(0.8) and item["audio_score"] == pytest.approx(0.8)
 
 
 def test_clear_history_deletes_finished_records_only(make_api: Callable[..., Api], kinds_dir: Path) -> None:
@@ -193,7 +181,7 @@ def test_clear_history_deletes_finished_records_only(make_api: Callable[..., Api
     assert api.c.get("/api/analyses").json()["items"] == []
 
 
-def test_results_stored_before_schema_0_2_still_open(make_api: Callable[..., Api]) -> None:
+def test_results_from_the_old_schema_open_as_legacy(make_api: Callable[..., Api]) -> None:
     api = make_api(doubles())
     legacy = {
         "schema_version": "0.1", "avdd_version": "0.0.1", "created_utc": "2026-10-20T10:00:00+00:00",
@@ -216,7 +204,6 @@ def test_results_stored_before_schema_0_2_still_open(make_api: Callable[..., Api
         c.execute("UPDATE analyses SET status='completed', result_json=?, summary_json=? WHERE id=?",
                   (json.dumps(legacy), json.dumps({"fusion_state": "single_modality", "fused_score": 0.7}), job_id))
     got = api.c.get(f"/api/analyses/{job_id}").json()
-    assert got["status"] == "completed" and got["result"]["assessment"] is None
-    assert got["result"]["modalities"]["audio"]["decision"] is None
+    assert got["status"] == "completed" and got["result"] is None and got["error"]["code"] == "legacy_result"
     item = api.c.get("/api/analyses").json()["items"][0]
-    assert item["id"] == job_id and item["assessment_status"] is None
+    assert item["id"] == job_id and item["verdict"] is None

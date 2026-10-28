@@ -12,7 +12,7 @@ pytest.importorskip("skimage")
 from avdd.common.errors import VideoError
 from avdd.pipeline.analyze import analyze_media
 from avdd.video.branch import run_image_branch
-from avdd.video.faces import HaarFaceDetector
+from avdd.video.faces import YuNetFaceDetector
 from avdd.video.frames import load_image_frame
 from tests.conftest import requires_ffmpeg
 from tests.stubs import StubAudio, StubBoxes, StubFace
@@ -31,7 +31,7 @@ def test_image_with_a_face_is_analysed_from_one_frame(kinds_dir: Path) -> None:
 
 def test_image_without_a_face_is_unreliable_not_real(kinds_dir: Path) -> None:
     det = StubFace(0.0)
-    out = run_image_branch(kinds_dir / "noface.jpg", det, HaarFaceDetector())
+    out = run_image_branch(kinds_dir / "noface.jpg", det, YuNetFaceDetector())
     assert out.evidence.score is None and not out.evidence.usable
     assert det.calls == 0
     assert out.evidence.reasons == ("no face was detected in the image",)
@@ -51,15 +51,14 @@ def test_pixel_cap_guards_decompression_bombs(kinds_dir: Path) -> None:
 
 @pytest.mark.parametrize("name", ["face.jpg", "face.png", "face.webp", "face.bmp"])
 def test_pipeline_runs_the_visual_branch_only_for_supported_images(kinds_dir: Path, name: str) -> None:
-    r = analyze_media(kinds_dir / name, StubAudio(0.9), StubFace(0.3), HaarFaceDetector())
+    r = analyze_media(kinds_dir / name, StubAudio(0.9), StubFace(0.3), YuNetFaceDetector())
     assert r["media"]["kind"] == "image"
     assert r["modalities"]["audio"]["status"] == "missing" and r["modalities"]["audio"]["score"] is None
     assert r["modalities"]["audio"]["reasons"] == ["this image has no audio"]
     assert r["modalities"]["visual"]["source"] == "image"
-    assert r["fusion"]["state"] == "single_modality" and r["fusion"]["fused_score"] is None
     assert r["assessment"]["basis"] == "visual_only"
 
 
 def test_pipeline_image_without_face_is_insufficient_evidence(kinds_dir: Path) -> None:
-    r = analyze_media(kinds_dir / "noface.jpg", StubAudio(0.9), StubFace(0.9), HaarFaceDetector())
-    assert r["assessment"]["status"] == "insufficient_evidence" and r["assessment"]["score"] is None
+    r = analyze_media(kinds_dir / "noface.jpg", StubAudio(0.9), StubFace(0.9), YuNetFaceDetector())
+    assert r["assessment"]["verdict"] == "insufficient_evidence" and r["assessment"]["score"] is None

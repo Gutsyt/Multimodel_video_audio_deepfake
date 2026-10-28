@@ -4,19 +4,23 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "avdd"
-version = "0.0.1"
-description = "Multimodal audio-visual deepfake detection research framework (Phase 0 foundations)"
+version = "1.0.0"
+description = "Audio-visual deepfake detection: frozen CLIP / XLS-R features with trained, calibrated heads"
 requires-python = ">=3.10"
 dependencies = ["numpy"]
 
 [project.optional-dependencies]
 video = ["opencv-python-headless>=4.9,<5"]
-torch = ["torch"]  # install the CPU build; see docs/runbook_local.md
-hf = ["transformers", "pillow", "safetensors"]
+torch = ["torch"]  # install the CPU build; see README
+hf = ["transformers>=4.45", "pillow", "safetensors"]
 api = ["fastapi", "uvicorn"]
+train = ["scikit-learn", "pyarrow", "soundfile", "huggingface_hub"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+avdd = ["assets/*.onnx", "assets/*.npz"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -31,10 +35,8 @@ target-version = "py310"
 [tool.mypy]
 python_version = "3.10"
 strict = true
-# scripts/inspect_dataset.py imports avdd.data.inventory, which was never committed (see README); skip it
 files = ["src", "scripts"]
-exclude = ["scripts/inspect_dataset.py"]
 
 [[tool.mypy.overrides]]
-module = ["uvicorn", "uvicorn.*", "torch", "torch.*", "transformers", "transformers.*", "cv2", "cv2.*", "PIL", "PIL.*", "skimage", "skimage.*"]
+module = ["uvicorn", "uvicorn.*", "torch", "torch.*", "transformers", "transformers.*", "cv2", "cv2.*", "PIL", "PIL.*", "skimage", "skimage.*", "sklearn", "sklearn.*", "pyarrow", "pyarrow.*", "soundfile"]
 ignore_missing_imports = true

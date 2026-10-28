@@ -1,4 +1,4 @@
-# Deployment notes (not yet deployed or tested in production)
+# Deployment notes
 
 Nothing in this repository has been deployed. Everything below is the plan the code is designed for; each step needs to be tried and verified in your environment before you rely on it.
 
@@ -11,8 +11,8 @@ Nothing in this repository has been deployed. Everything below is the plan the c
 |---|---|
 | Python | 3.10+, with `pip install -e ".[video,hf,api]"` and CPU PyTorch (`pip install torch --index-url https://download.pytorch.org/whl/cpu`) |
 | ffmpeg + ffprobe | on `PATH`. Required to read every media type |
-| Model weights | AASIST weights are vendored in `third_party/aasist/weights`. The visual model (`prithivMLmods/Deep-Fake-Detector-v2-Model`) is downloaded from Hugging Face on first start (about 350 MB) and cached; the host needs outbound HTTPS to huggingface.co once, or a pre-populated Hugging Face cache |
-| Memory / CPU | Roughly 2 GB RAM free for both models on CPU. A 13 s clip took about 4 to 5 s to analyze on a 4-core CPU in testing; this is one observation, not a benchmark |
+| Model weights | The trained heads and YuNet ship in `src/avdd/assets` (<1 MB). The backbones `openai/clip-vit-large-patch14` (1.7 GB) and `facebook/wav2vec2-xls-r-300m` (1.2 GB) download from Hugging Face on first start and are cached; the host needs outbound HTTPS to huggingface.co once, or a pre-populated cache |
+| Memory / CPU | About 4 GB RAM for both backbones on CPU. A 10 s video takes roughly 10-20 s on a 4-core CPU (12 face crops through ViT-L/14 dominate); a GPU (`AVDD_DEVICE=cuda`) makes it near-instant |
 | Storage | `AVDD_DATA_DIR` holds the SQLite history and a temporary upload folder. Use a persistent disk if you want history to survive restarts. Uploads are deleted when each job ends and swept at startup |
 | Limits | `AVDD_MAX_UPLOAD_MB` (100), `AVDD_MAX_DURATION_S` (60), `AVDD_MAX_IMAGE_MEGAPIXELS` (40). Raise the reverse proxy's body-size and timeout limits to match, or uploads will fail before reaching the app |
 
@@ -25,7 +25,7 @@ Nothing in this repository has been deployed. Everything below is the plan the c
 - The raw upload is streamed to a random temporary file, never named after the client's file, and deleted when the job ends (success or failure). Only the result JSON is stored.
 - There is **no authentication, no per-user data separation and no rate limiting** beyond the queue bound. Anyone who can reach the server can upload files and read, export and delete every stored record. Put it behind an authenticating reverse proxy or a private network before exposing it.
 - Put TLS in front of it. Do not claim enterprise-grade security, legal admissibility or forensic reliability; none has been established.
-- Tell users that faces and voices are personal data and obtain consent before they upload other people's media (the UI shows a consent checkbox, which is a reminder, not a legal control).
+- Tell users that faces and voices are personal data and obtain consent before they upload other people's media.
 - Disable the interactive API docs in production with `AVDD_ENABLE_DOCS=0`.
 
 ## Verifying a deployment
