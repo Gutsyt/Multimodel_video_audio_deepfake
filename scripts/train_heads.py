@@ -250,7 +250,7 @@ def fit_head(cache: Path, kind: str, train: list[str], tests: dict[str, list[str
     t_real = float(min(np.quantile(gp[gy == 0], 0.90), t_fake - 1e-3))
     report = {"layer": best["layer"], "C": best["C"], "t_fake": round(t_fake, 4), "t_real": round(t_real, 4),
               "validation": _metrics(gp, gy, t_fake, t_real), "tests": {}, "search": search,
-              "n_train": int(len(xt))}  # fmt: skip
+              "n_train": len(xt)}  # fmt: skip
     for tname, names in tests.items():
         x, y, g = _load(cache, names, best["layer"])
         if tname == "in_domain_test":
