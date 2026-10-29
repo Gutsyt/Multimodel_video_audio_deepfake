@@ -53,7 +53,7 @@ class ClipFaceDetector:
             self.model_card = _card(self.head.meta)
         try:
             self._processor = CLIPImageProcessor.from_pretrained(BACKBONE)
-            self._model = CLIPVisionModel.from_pretrained(BACKBONE).to(self._device).eval()  # type: ignore[arg-type]
+            self._model = CLIPVisionModel.from_pretrained(BACKBONE).to(self._device).eval()  # type: ignore[arg-type,unused-ignore]
         except Exception as exc:
             raise ModelLoadError("download_failed", f"could not load {BACKBONE}: {type(exc).__name__}") from exc
         self.output_semantics = {"score_class": "fake", "calibrated": True,

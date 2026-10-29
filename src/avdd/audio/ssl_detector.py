@@ -57,7 +57,7 @@ class SslAudioDetector:
         except Exception as exc:
             raise ModelLoadError("download_failed", f"could not load {BACKBONE}: {type(exc).__name__}") from exc
         model.encoder.layers = model.encoder.layers[:MAX_LAYERS]
-        self._model = model.to(self._device).eval()  # type: ignore[arg-type]
+        self._model = model.to(self._device).eval()  # type: ignore[arg-type,unused-ignore]
         self.output_semantics = {"score_class": "spoof", "calibrated": True,
                                  "higher_means": "calibrated probability that the speech is synthetic"}  # fmt: skip
 

@@ -38,5 +38,5 @@ strict = true
 files = ["src", "scripts"]
 
 [[tool.mypy.overrides]]
-module = ["uvicorn", "uvicorn.*", "torch", "torch.*", "transformers", "transformers.*", "cv2", "cv2.*", "PIL", "PIL.*", "skimage", "skimage.*", "sklearn", "sklearn.*", "pyarrow", "pyarrow.*", "soundfile"]
+module = ["uvicorn", "uvicorn.*", "torch", "torch.*", "transformers", "transformers.*", "cv2", "cv2.*", "PIL", "PIL.*", "skimage", "skimage.*", "sklearn", "sklearn.*", "pyarrow", "pyarrow.*", "soundfile", "matplotlib", "matplotlib.*", "huggingface_hub", "huggingface_hub.*"]
 ignore_missing_imports = true
