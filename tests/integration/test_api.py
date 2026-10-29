@@ -196,7 +196,7 @@ def test_partial_model_failure_is_visible_and_not_authentic(make_api: Callable[.
 def test_real_loader_failure_reports_unavailable(make_api: Callable[..., Api], tmp_path: Path, monkeypatch: pytest.MonkeyPatch, face_dir: Path) -> None:
     monkeypatch.setattr("avdd.audio.ssl_detector.ASSETS", tmp_path / "does_not_exist")
     api = make_api(None, audio_model="xlsr", video_model="none")  # real loader, trained head missing
-    end = time.time() + 20
+    end = time.time() + 60  # cold transformers import can be slow
     while api.c.get("/api/capabilities").json()["models_state"] == "loading" and time.time() < end:
         time.sleep(0.05)
     cap = api.c.get("/api/capabilities").json()

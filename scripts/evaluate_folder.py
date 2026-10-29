@@ -26,8 +26,9 @@ def main() -> None:
     ap.add_argument("--real", type=Path)
     ap.add_argument("--fake", type=Path)
     ap.add_argument("--json", type=Path)
+    ap.add_argument("--device", default="cpu", help="cpu | cuda | mps")
     a = ap.parse_args()
-    audio, visual, faces = SslAudioDetector(), ClipFaceDetector(), YuNetFaceDetector()
+    audio, visual, faces = SslAudioDetector(device=a.device), ClipFaceDetector(device=a.device), YuNetFaceDetector()
     audio.load()
     visual.load()
     rows = []

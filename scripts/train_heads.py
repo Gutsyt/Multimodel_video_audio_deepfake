@@ -51,14 +51,14 @@ def _crop_or_whole(img_bgr: Any, fd: Any) -> Any:
     return crop if crop is not None else np.ascontiguousarray(img_bgr[:, :, ::-1])
 
 
-def visual_items(data: Path, fd: Any, frames_per_video: int) -> Iterator[tuple[str, Any, int, str]]:
+def visual_items(data: Path, fd: Any, frames_per_video: int, done: frozenset[str] = frozenset()) -> Iterator[tuple[str, Any, int, str]]:
     """Yield (source, face crop, label, group) one at a time, so memory stays flat."""
     import cv2
     import pyarrow.parquet as pq
 
     from avdd.video.frames import sample_frames
 
-    for p in sorted((data / "ff").rglob("*.mp4")):
+    for p in [] if "ff" in done else sorted((data / "ff").rglob("*.mp4")):
         label = int("/fake/" in str(p))
         group = "ff_" + (p.stem.split("__")[0].split("_")[0] if label else p.stem)
         for fr in sample_frames(p, frames_per_video):
@@ -67,6 +67,8 @@ def visual_items(data: Path, fd: Any, frames_per_video: int) -> Iterator[tuple[s
     for tf in sorted((data / "WildDeepfake").rglob("*.tar.gz")):
         label = int("fake_" in tf.parent.name)
         part = "wdf_test" if tf.parent.name.endswith("_test") else "wdf"
+        if part in done:
+            continue
         with tarfile.open(tf) as t:
             seqs: dict[str, list[tarfile.TarInfo]] = defaultdict(list)
             for m in t.getmembers():
@@ -81,6 +83,8 @@ def visual_items(data: Path, fd: Any, frames_per_video: int) -> Iterator[tuple[s
                         yield part, _crop_or_whole(img, fd), label, f"wdf_{tf.stem}_{seq}"
     for pf in sorted((data / "celeb-df-image-dataset" / "data").glob("*.parquet")):
         part = "celeb_test" if pf.name.startswith("test") else "celeb"
+        if part in done:
+            continue
         keep_fake = 0.03 if part == "celeb_test" else 0.02  # all reals are kept; fakes outnumber them ~80:1
         for batch in pq.ParquetFile(pf).iter_batches(batch_size=256):
             for im, lab in zip(batch.column("image").to_pylist(), batch.column("label").to_pylist(), strict=True):
@@ -93,13 +97,15 @@ def visual_items(data: Path, fd: Any, frames_per_video: int) -> Iterator[tuple[s
                     yield part, _crop_or_whole(img, fd), 1 - lab, "cdf_" + name.rsplit("_", 1)[0]
 
 
-def audio_items(data: Path, per_source: dict[str, int]) -> Iterator[tuple[str, Any, int, str]]:
+def audio_items(data: Path, per_source: dict[str, int], done: frozenset[str] = frozenset()) -> Iterator[tuple[str, Any, int, str]]:
     import pyarrow.parquet as pq
     import soundfile as sf
 
     from avdd.audio.windows import make_windows
 
     for name, cap in per_source.items():
+        if name in done:
+            continue
         shards = sorted((data / name / "data").glob("test-*.parquet"))
         rows = [(s, i) for s in shards for i in range(pq.ParquetFile(s).metadata.num_rows)]
         rng.shuffle(rows)
@@ -121,6 +127,11 @@ def audio_items(data: Path, per_source: dict[str, int]) -> Iterator[tuple[str, A
                     spk = notes.get("speaker") or notes.get("speaker_id") or "?"
                     yield name, make_windows(wave)[0].samples, int(y), f"{name}_{spk}"
                 base += batch.num_rows
+
+
+def finished(cache: Path, prefix: str) -> frozenset[str]:
+    """Sources already embedded in an earlier (interrupted) run; they are skipped entirely."""
+    return frozenset(p.stem.removeprefix(f"{prefix}_") for p in cache.glob(f"{prefix}_*.npz"))
 
 
 def embed_stream(items: Iterator[tuple[str, Any, int, str]], det: Any, layers: tuple[int, ...], cache: Path, prefix: str) -> None:
@@ -170,7 +181,7 @@ def embed_visual(data: Path, cache: Path, frames_per_video: int, device: str = "
 
     det = ClipFaceDetector(device=device, with_head=False)
     det.load()
-    embed_stream(visual_items(data, YuNetFaceDetector(), frames_per_video), det, VIS_LAYERS, cache, "vis")
+    embed_stream(visual_items(data, YuNetFaceDetector(), frames_per_video, finished(cache, "vis")), det, VIS_LAYERS, cache, "vis")
 
 
 def embed_audio(data: Path, cache: Path, caps: dict[str, int], device: str = "cpu") -> None:
@@ -178,7 +189,7 @@ def embed_audio(data: Path, cache: Path, caps: dict[str, int], device: str = "cp
 
     det = SslAudioDetector(device=device, with_head=False)
     det.load()
-    embed_stream(audio_items(data, caps), det, AUD_LAYERS, cache, "aud")
+    embed_stream(audio_items(data, caps, finished(cache, "aud")), det, AUD_LAYERS, cache, "aud")
 
 
 # ---------------------------------------------------------------- fit

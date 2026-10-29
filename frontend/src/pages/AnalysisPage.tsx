@@ -12,7 +12,7 @@ import { sessionMedia } from "../lib/session";
 const LINE: Record<string, string> = {
   likely_authentic: "Both checks sit in the range genuine media normally falls in.",
   inconclusive: "At least one check landed between the thresholds. Check where this file came from before trusting it.",
-  likely_manipulated: "A check crossed the threshold that only about 2% of genuine media reaches in testing.",
+  likely_manipulated: "A check crossed the threshold that at most 2% of genuine media reached in validation.",
   insufficient_evidence: "No face and no speech could be analysed, so this file cannot be judged either way.",
 };
 const STAGE: Record<string, string> = { probing: "Reading the file", audio: "Checking the voice", visual: "Checking the face", verdict: "Weighing the evidence" };

@@ -37,7 +37,7 @@ export function AnalyzePage() {
   const ready = caps?.models_state === "ready";
   const blocked = capsError ? "The analysis server is not reachable. Start the backend and reload."
     : caps?.models_state === "loading" ? "Models are loading. This takes about a minute after the server starts."
-    : caps?.models_state === "unavailable" ? "No analysis model could be loaded on the server." : null;
+    : caps?.models_state === "unavailable" ? (caps.models.some((m) => m.error_code === "head_missing") ? "The trained model files are missing. Train them first: see docs/TRAINING.md." : "No analysis model could be loaded on the server.") : null;
   const busy = view.s === "busy";
 
   function pick(f: File | null | undefined) {

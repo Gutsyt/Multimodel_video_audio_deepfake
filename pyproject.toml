@@ -29,7 +29,7 @@ markers = ["real_models: runs the real pretrained models (plumbing/plausibility 
 
 [tool.ruff]
 line-length = 100
-extend-exclude = ["third_party"]
+extend-exclude = ["notebooks"]
 target-version = "py310"
 
 [tool.mypy]
