@@ -50,7 +50,7 @@ download data ─► embed faces + speech (GPU-heavy) ─► fit classifiers ─
 5. Keep the tab open. Check back about every 30–60 min.
 6. When cell 9 shows the graphs, go to **section 4** below to check the numbers, then send the results back (cell 11, or **section 5**).
 
-If the session disconnects: *Runtime → Run all* again. Finished downloads and embedding sources are skipped automatically.
+If the session disconnects: *Runtime → Run all* again. Finished downloads and embedding sources are skipped automatically. After pulling a code update, *Run all* again as well: a cache file that is missing its genuine or its fake samples (made by an older version) is detected and rebuilt, and everything else is reused.
 
 What each notebook cell does:
 

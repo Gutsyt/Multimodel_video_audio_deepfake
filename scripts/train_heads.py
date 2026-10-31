@@ -64,9 +64,14 @@ def visual_items(data: Path, fd: Any, frames_per_video: int, done: frozenset[str
         for fr in sample_frames(p, frames_per_video):
             if (c := _faces(fr.image_bgr, fd)) is not None:
                 yield "ff", c, label, group
-    for tf in sorted((data / "WildDeepfake").rglob("*.tar.gz")):
+    def wdf_part(tf: Path) -> str:
+        return "wdf_test" if tf.parent.name.endswith("_test") else "wdf"
+
+    # Grouped by source so each source's real AND fake tars arrive in one block (embed_stream saves a
+    # source when the next one starts); plain path order would put fake_test, fake_train, real_test, real_train.
+    for tf in sorted((data / "WildDeepfake").rglob("*.tar.gz"), key=lambda t: (wdf_part(t), str(t))):
         label = int("fake_" in tf.parent.name)
-        part = "wdf_test" if tf.parent.name.endswith("_test") else "wdf"
+        part = wdf_part(tf)
         if part in done:
             continue
         with tarfile.open(tf) as t:
@@ -130,12 +135,22 @@ def audio_items(data: Path, per_source: dict[str, int], done: frozenset[str] = f
 
 
 def finished(cache: Path, prefix: str) -> frozenset[str]:
-    """Sources already embedded in an earlier (interrupted) run; they are skipped entirely."""
-    return frozenset(p.stem.removeprefix(f"{prefix}_") for p in cache.glob(f"{prefix}_*.npz"))
+    """Sources already embedded in an earlier (interrupted) run; they are skipped entirely.
+
+    Every source holds both genuine and fake samples, so a cache with one class is incomplete (written by
+    an older version that dropped part of a source) and is embedded again.
+    """
+    return frozenset(p.stem.removeprefix(f"{prefix}_") for p in cache.glob(f"{prefix}_*.npz")
+                     if len(np.unique(np.load(p)["y"])) == 2)  # fmt: skip
 
 
-def embed_stream(items: Iterator[tuple[str, Any, int, str]], det: Any, layers: tuple[int, ...], cache: Path, prefix: str) -> None:
-    """Embed in batches of 32 as items arrive; save one .npz per source when it ends."""
+def embed_stream(items: Iterator[tuple[str, Any, int, str]], det: Any, layers: tuple[int, ...], cache: Path, prefix: str,
+                 done: frozenset[str] = frozenset()) -> None:  # fmt: skip
+    """Embed in batches of 32 as items arrive; save one .npz per source when the next source starts.
+
+    Items of one source must be contiguous: a source that reappears after it was saved is an error, not
+    silently dropped data.
+    """
     acc: dict[str, dict[str, list[Any]]] = defaultdict(lambda: defaultdict(list))
     buf: list[tuple[str, Any, int, str]] = []
     n, t0 = 0, time.time()
@@ -159,14 +174,17 @@ def embed_stream(items: Iterator[tuple[str, Any, int, str]], det: Any, layers: t
         np.savez(cache / f"{prefix}_{src}.npz", **{k: np.array(v) for k, v in d.items()})  # type: ignore[arg-type]
         print("saved", f"{prefix}_{src}", len(d["y"]), flush=True)
 
-    current = None
+    current, saved = None, set()
     for item in items:
+        if item[0] in done:
+            continue
+        if item[0] in saved:
+            raise RuntimeError(f"source {item[0]!r} is not contiguous in the item stream; its data would be lost")
         if current is not None and item[0] != current:
             flush()
             save(current)
+            saved.add(current)
         current = item[0]
-        if (cache / f"{prefix}_{current}.npz").exists():
-            continue
         buf.append(item)
         if len(buf) >= 32:
             flush()
@@ -181,7 +199,8 @@ def embed_visual(data: Path, cache: Path, frames_per_video: int, device: str = "
 
     det = ClipFaceDetector(device=device, with_head=False)
     det.load()
-    embed_stream(visual_items(data, YuNetFaceDetector(), frames_per_video, finished(cache, "vis")), det, VIS_LAYERS, cache, "vis")
+    done = finished(cache, "vis")
+    embed_stream(visual_items(data, YuNetFaceDetector(), frames_per_video, done), det, VIS_LAYERS, cache, "vis", done)
 
 
 def embed_audio(data: Path, cache: Path, caps: dict[str, int], device: str = "cpu") -> None:
@@ -189,7 +208,8 @@ def embed_audio(data: Path, cache: Path, caps: dict[str, int], device: str = "cp
 
     det = SslAudioDetector(device=device, with_head=False)
     det.load()
-    embed_stream(audio_items(data, caps, finished(cache, "aud")), det, AUD_LAYERS, cache, "aud")
+    done = finished(cache, "aud")
+    embed_stream(audio_items(data, caps, done), det, AUD_LAYERS, cache, "aud", done)
 
 
 # ---------------------------------------------------------------- fit

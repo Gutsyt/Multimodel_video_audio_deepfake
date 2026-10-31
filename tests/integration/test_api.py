@@ -313,7 +313,7 @@ def test_real_models_through_the_api(make_api: Callable[..., Api], face_dir: Pat
     except AvddError as exc:
         pytest.skip(f"real models unavailable: {exc.code}")
     api = make_api(bundle_from_detectors(audio, visual, YuNetFaceDetector()))
-    res = api.run(face_dir / "face_audio.mp4")["result"]
+    res = api.run(face_dir / "face_audio.mp4", timeout=300)["result"]  # real CLIP-L/14 on CPU, cold
     assert res["is_test_fixture"] is False and res["models"][0]["metrics"]["tests"]
     assert res["modalities"]["visual"]["status"] == "available" and 0.0 <= res["modalities"]["visual"]["score"] <= 1.0
     api.assert_clean()
