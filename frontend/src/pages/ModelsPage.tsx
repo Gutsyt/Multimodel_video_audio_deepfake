@@ -45,7 +45,7 @@ function ModelCard({ m }: { m: ModelStatus }) {
       {head && met && (
         <>
           <div className="metrics">
-            <div className="metric"><span className="v"><CountUp value={Math.round(head.auc * 100)} suffix="" /></span><span className="faint" style={{ fontSize: 12.5 }}>AUC × 100</span></div>
+            <div className="metric"><span className="v">{head.auc == null ? "–" : <CountUp value={Math.round(head.auc * 100)} suffix="" />}</span><span className="faint" style={{ fontSize: 12.5 }}>AUC × 100</span></div>
             <div className="metric"><span className="v"><CountUp value={Math.round((head.genuine_flagged ?? 0) * 1000) / 10} /></span><span className="faint" style={{ fontSize: 12.5 }}>genuine flagged</span></div>
             <div className="metric"><span className="v"><CountUp value={Math.round((head.fake_flagged ?? 0) * 100)} /></span><span className="faint" style={{ fontSize: 12.5 }}>fakes flagged</span></div>
           </div>
@@ -54,7 +54,7 @@ function ModelCard({ m }: { m: ModelStatus }) {
             <tbody>
               {Object.entries(met.tests).map(([k, s]) => (
                 <tr key={k}><td>{TEST_LABEL[k] ?? k}<div className="faint" style={{ fontSize: 12 }}>{s.n_real} real · {s.n_fake} fake</div></td>
-                  <td className="n">{s.auc.toFixed(3)}</td><td className="n">{pct(s.eer)}</td><td className="n">{pct(s.genuine_flagged)}</td><td className="n">{pct(s.fake_flagged)}</td></tr>
+                  <td className="n">{s.auc == null ? "–" : s.auc.toFixed(3)}</td><td className="n">{pct(s.eer)}</td><td className="n">{pct(s.genuine_flagged)}</td><td className="n">{pct(s.fake_flagged)}</td></tr>
               ))}
             </tbody>
           </table>

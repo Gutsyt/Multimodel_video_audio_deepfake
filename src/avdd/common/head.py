@@ -21,7 +21,8 @@ class LinearHead:
         self.mean, self.scale = z["mean"], z["scale"]
         self.w, self.b = z["w"], float(z["b"])
         self.cal_a, self.cal_b = float(z["cal_a"]), float(z["cal_b"])
-        self.meta: dict[str, Any] = json.loads(str(z["meta"]))
+        # NaN/Infinity (e.g. AUC of a single-class test set) become None: the API must emit valid JSON.
+        self.meta: dict[str, Any] = json.loads(str(z["meta"]), parse_constant=lambda _: None)
 
     @property
     def t_fake(self) -> float:

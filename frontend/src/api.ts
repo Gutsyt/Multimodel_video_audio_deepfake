@@ -12,7 +12,7 @@ export interface ModelCard {
   metrics?: HeadMetrics | null;
 }
 export interface SetMetrics {
-  n_real: number; n_fake: number; auc: number; eer: number;
+  n_real: number; n_fake: number; auc: number | null; eer: number | null;  // null: not computable (single-class set)
   genuine_flagged?: number; genuine_cleared?: number; fake_flagged?: number; fake_cleared?: number;
 }
 export interface HeadMetrics { layer: number; t_fake: number; t_real: number; validation: SetMetrics; tests: Record<string, SetMetrics> }

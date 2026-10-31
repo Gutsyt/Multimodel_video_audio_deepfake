@@ -55,6 +55,11 @@ def scores(cache: Path, kind: str, names: list[str], test_split: bool) -> tuple[
     return _group_scores(p, y, g) if kind == "visual" else (p, y)
 
 
+def num(v: float | None, spec: str) -> str:
+    """Format a metric; a metric that could not be computed (single-class set) shows as a dash."""
+    return "–" if v is None or np.isnan(v) else format(v, spec)
+
+
 def save(fig: Any, name: str) -> str:
     fig.tight_layout()
     fig.savefig(FIG / name, format="svg")
@@ -119,7 +124,7 @@ def fig_roc(cache: Path) -> str:
         ax.scatter([op[0]], [op[1]], s=60, color=FAKE, zorder=3, edgecolor="white", linewidth=2)
         ax.annotate(f"at the flag threshold:\n{op[0]:.1%} of genuine flagged\n{op[1]:.0%} of fakes caught", op, xytext=(0.38, 0.12),
                     textcoords="axes fraction", fontsize=8.5, color=INK2, arrowprops={"arrowstyle": "-", "color": INK2, "lw": 0.8})
-        ax.set_title(f"{NAME[kind]} · {lbl}\nAUC {m['auc']:.3f} · EER {m['eer']:.1%}", loc="left", fontsize=9.5, color=INK)
+        ax.set_title(f"{NAME[kind]} · {lbl}\nAUC {num(m['auc'], '.3f')} · EER {num(m['eer'], '.1%')}", loc="left", fontsize=9.5, color=INK)
         ax.set_xlabel("genuine flagged (FPR)")
         ax.set_ylabel("fakes caught (TPR)")
         ax.set_xlim(0, 1)
@@ -195,7 +200,7 @@ def main() -> None:
         meta = LinearHead(ASSETS / f"{kind}_head.npz").meta
         for t, m in {"validation": meta["metrics"]["validation"], **meta["metrics"]["tests"]}.items():
             lbl = "Validation (thresholds set here)" if t == "validation" else SETS[kind][1][t][0]
-            metric_rows.append([NAME[kind], lbl, f"{m['n_real']:,} / {m['n_fake']:,}", f"{m['auc']:.3f}", f"{m['eer']:.1%}",
+            metric_rows.append([NAME[kind], lbl, f"{m['n_real']:,} / {m['n_fake']:,}", num(m["auc"], ".3f"), num(m["eer"], ".1%"),
                                 f"{m['genuine_flagged']:.1%}", f"{m['genuine_cleared']:.1%}", f"{m['fake_flagged']:.1%}"])
     th = [[NAME[k], str(LinearHead(ASSETS / f"{k}_head.npz").meta["layer"]), f"{LinearHead(ASSETS / f'{k}_head.npz').t_real:.3f}",
            f"{LinearHead(ASSETS / f'{k}_head.npz').t_fake:.3f}"] for k in ("visual", "audio")]
