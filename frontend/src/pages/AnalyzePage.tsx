@@ -1,152 +1,158 @@
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ApiRequestError, uploadMedia, waitForAnalysis, type ApiErrorBody, type MediaKind } from "../api";
 import { useAppData } from "../AppData";
 import { Icon } from "../components/Icon";
-import { PageHead } from "../components/Shell";
+import { rise, stagger } from "../components/Shell";
 import { useToast } from "../components/Toasts";
 import { KIND_LABEL, describeError, formatBytes } from "../lib/format";
+import { rememberMedia } from "../lib/session";
 import { acceptAttr, acceptedExtensions, validateFile } from "../lib/validate";
 
-type View =
-  | { s: "idle" }
-  | { s: "ready" }
-  | { s: "busy"; phase: "upload" | "queued" | "stage"; loaded: number; total: number; stage: string | null; t0: number }
-  | { s: "error"; error: ApiErrorBody };
+type Phase = "upload" | "queued" | "probing" | "audio" | "visual" | "verdict";
+type View = { s: "idle" } | { s: "busy"; phase: Phase; progress: number } | { s: "error"; error: ApiErrorBody };
 
-const STAGE_LABEL: Record<string, string> = { probing: "Reading the file", audio: "Audio branch", visual: "Visual branch", fusion: "Combining evidence" };
-const STAGES_FOR: Record<MediaKind, string[]> = { video: ["probing", "audio", "visual", "fusion"], audio: ["probing", "audio", "fusion"], image: ["probing", "visual", "fusion"] };
+const STEP_LABEL: Record<Phase, string> = {
+  upload: "Uploading", queued: "Waiting for the worker", probing: "Reading the file",
+  audio: "Checking the voice", visual: "Checking the face", verdict: "Weighing the evidence",
+};
+const STEPS_FOR: Record<MediaKind, Phase[]> = {
+  video: ["upload", "probing", "audio", "visual", "verdict"], audio: ["upload", "probing", "audio", "verdict"], image: ["upload", "probing", "visual", "verdict"],
+};
 
 export function AnalyzePage() {
   const { caps, capsError, refreshHistory } = useAppData();
   const toast = useToast();
   const [file, setFile] = useState<File | null>(null);
-  const [problems, setProblems] = useState<string[]>([]);
-  const [consent, setConsent] = useState(false);
   const [over, setOver] = useState(false);
   const [view, setView] = useState<View>({ s: "idle" });
-  const [now, setNow] = useState(Date.now());
-  const abort = useRef<AbortController | null>(null);
   const input = useRef<HTMLInputElement>(null);
-  const accepted = acceptedExtensions(caps);
+  const abort = useRef<AbortController | null>(null);
   const check = useMemo(() => (file ? validateFile(file, caps) : null), [file, caps]);
   const url = useMemo(() => (file && check?.kind ? URL.createObjectURL(file) : null), [file, check?.kind]);
   useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
-  useEffect(() => { if (view.s !== "busy") return; const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t); }, [view.s]);
   useEffect(() => () => abort.current?.abort(), []);
+
+  const accepted = acceptedExtensions(caps);
+  const ready = caps?.models_state === "ready";
+  const blocked = capsError ? "The analysis server is not reachable. Start the backend and reload."
+    : caps?.models_state === "loading" ? "Models are loading. This takes about a minute after the server starts."
+    : caps?.models_state === "unavailable" ? (caps.models.some((m) => m.error_code === "head_missing") ? "The trained model files are missing. Train them first: see docs/TRAINING.md." : "No analysis model could be loaded on the server.") : null;
+  const busy = view.s === "busy";
 
   function pick(f: File | null | undefined) {
     if (!f) return;
-    const c = validateFile(f, caps);
-    setFile(f); setProblems(c.errors); setView(c.errors.length ? { s: "idle" } : { s: "ready" });
+    setFile(f); setView({ s: "idle" });
   }
-  function clear() { setFile(null); setProblems([]); setView({ s: "idle" }); if (input.current) input.current.value = ""; }
+  function reset() { setFile(null); setView({ s: "idle" }); if (input.current) input.current.value = ""; }
 
   async function run() {
-    if (!file || !check?.kind) return;
+    if (!file || !check?.kind || check.errors.length) return;
     const ctl = new AbortController(); abort.current = ctl;
-    const t0 = Date.now();
-    setView({ s: "busy", phase: "upload", loaded: 0, total: file.size, stage: null, t0 });
+    setView({ s: "busy", phase: "upload", progress: 0 });
     try {
-      const created = await uploadMedia(file, (loaded, total) => setView({ s: "busy", phase: "upload", loaded, total, stage: null, t0 }), ctl.signal);
-      setView({ s: "busy", phase: "queued", loaded: file.size, total: file.size, stage: null, t0 });
+      const created = await uploadMedia(file, (l, t) => setView({ s: "busy", phase: "upload", progress: l / Math.max(1, t) }), ctl.signal);
+      rememberMedia(created.id, file);
+      setView({ s: "busy", phase: "queued", progress: 1 });
       const final = await waitForAnalysis(created.id, (st) => {
-        if (st.status === "processing") setView({ s: "busy", phase: "stage", loaded: file.size, total: file.size, stage: st.stage, t0 });
-      }, ctl.signal);
-      await refreshHistory();
+        if (st.status === "processing" && st.stage) setView({ s: "busy", phase: (st.stage as Phase), progress: 1 });
+      }, ctl.signal, 500);
+      void refreshHistory();
       if (final.status === "failed" && final.error) { setView({ s: "error", error: final.error }); return; }
-      toast.push("Analysis finished.", "success");
       window.location.hash = `#/analysis/${created.id}`;
     } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") { setView({ s: "ready" }); toast.push("Upload cancelled."); return; }
+      if (e instanceof DOMException && e.name === "AbortError") { setView({ s: "idle" }); toast.push("Upload cancelled."); return; }
       setView({ s: "error", error: e instanceof ApiRequestError ? e.body : { code: "internal_error", message: "Unexpected error." } });
     }
   }
 
-  const modelsReady = caps?.models_state === "ready";
-  const blocked = capsError ? "The backend is not reachable." : !caps ? "Checking the backend…" : caps.models_state === "loading" ? "Models are still loading; this usually takes a minute after start." : caps.models_state === "unavailable" ? "No analysis model could be loaded on the server." : null;
-  const busy = view.s === "busy";
-  const stageList = check?.kind ? STAGES_FOR[check.kind] : [];
+  const steps = check?.kind ? STEPS_FOR[check.kind] : [];
+  const cur = view.s === "busy" ? (view.phase === "queued" ? "probing" : view.phase) : null;
 
   return (
-    <div className="stack">
-      <PageHead title="New analysis" lead="Upload one file. It is processed from a temporary copy that the server deletes when the analysis ends." />
-      {blocked && <div className="errbox" role="status"><b>Not ready</b><span>{blocked}</span></div>}
+    <section className="hero">
+      <motion.div className="hero-copy" variants={stagger} initial="hidden" animate="show">
+        <motion.h1 className="display" variants={rise}>Is it <em>real</em>,<br />or is it made?</motion.h1>
+        <motion.p className="lead" variants={rise}>
+          Drop a video, a voice clip or a photo. The face and the voice are checked separately by models trained on
+          FaceForensics++, Celeb-DF, WildDeepfake, ASVspoof and In-the-Wild, then judged against thresholds set to keep false alarms on genuine media rare.
+        </motion.p>
+        <motion.div className="facts-inline" variants={rise}>
+          <span><b>2</b>independent checks</span>
+          <span><b>3</b>possible verdicts</span>
+          <span><b>0</b>files kept after analysis</span>
+        </motion.div>
+        {blocked && <motion.div className="alert soft" variants={rise} role="status">{blocked}</motion.div>}
+      </motion.div>
 
-      {!file && (
-        <div className={`drop${over ? " over" : ""}`} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
-          onDrop={(e) => { e.preventDefault(); setOver(false); pick(e.dataTransfer.files[0]); }}>
-          <svg className="glyph" viewBox="0 0 74 74" aria-hidden="true"><g fill="none" strokeWidth="3" strokeLinecap="round"><path stroke="var(--signal)" d="M12 30v14M22 22v30M32 14v46" /><rect stroke="var(--flag)" x="44" y="22" width="18" height="18" rx="3" /><path stroke="var(--flag)" d="M44 50h18M44 58h11" /></g></svg>
-          <div><h2>Drop a file here</h2><p className="muted" style={{ marginTop: 4 }}>or choose one from your device</p></div>
-          <button className="btn primary" onClick={() => input.current?.click()}><Icon name="analyze" /> Choose file</button>
-          <div className="kinds" aria-label="Accepted formats">
-            {(["video", "audio", "image"] as MediaKind[]).map((k) => <span key={k}><Icon name={k} size={15} /> <b>{KIND_LABEL[k]}</b> {accepted[k].join(" ")}</span>)}
-          </div>
-          <small className="faint">{caps ? `Up to ${caps.limits.max_upload_mb} MB; audio and video up to ${caps.limits.max_duration_s} s${caps.limits.max_image_megapixels ? `; images up to ${caps.limits.max_image_megapixels} MP` : ""}.` : "Limits load from the server."}</small>
-        </div>
-      )}
-      <input ref={input} type="file" hidden accept={acceptAttr(caps)} onChange={(e) => pick(e.target.files?.[0])} aria-label="Choose a media file" />
+      <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}>
+        <input ref={input} type="file" hidden accept={acceptAttr(caps)} onChange={(e) => pick(e.target.files?.[0])} aria-label="Choose a media file" />
+        <AnimatePresence mode="wait">
+          {!file ? (
+            <motion.div key="drop" className={`drop card${over ? " over" : ""}`} role="button" tabIndex={0} aria-label="Choose or drop a file"
+              animate={{ scale: over ? 1.02 : 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ type: "spring", stiffness: 300, damping: 24 }}
+              onClick={() => input.current?.click()} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") input.current?.click(); }}
+              onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
+              onDrop={(e) => { e.preventDefault(); setOver(false); pick(e.dataTransfer.files[0]); }}>
+              <svg className="border" aria-hidden="true"><rect x="1" y="1" rx="21" /></svg>
+              <motion.div className="orb" animate={{ y: over ? -6 : [0, -5, 0] }} transition={over ? { duration: 0.2 } : { duration: 3.2, repeat: Infinity, ease: "easeInOut" }}>
+                <Icon name="analyze" size={30} />
+              </motion.div>
+              <div>
+                <h2 className="h2">{over ? "Let go to add it" : "Drop a file to check"}</h2>
+                <p className="muted" style={{ marginTop: 6 }}>or click to choose from your device</p>
+              </div>
+              <div className="kinds">
+                {(["video", "audio", "image"] as MediaKind[]).map((k) => <span className="tag" key={k} title={accepted[k].join(" ")}><Icon name={k} size={14} />{KIND_LABEL[k]}</span>)}
+              </div>
+              <small className="faint">{caps ? `Up to ${Math.round(caps.limits.max_upload_mb)} MB · first ${caps.limits.max_duration_s} s analysed` : " "}</small>
+            </motion.div>
+          ) : (
+            <motion.div key="sel" className="card selected" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div className="preview">
+                {check?.kind === "video" && url && <video src={url} muted playsInline autoPlay loop />}
+                {check?.kind === "image" && url && <img src={url} alt="Selected file preview" />}
+                {check?.kind === "audio" && url && <audio src={url} controls />}
+                {!check?.kind && <Icon name="file" size={40} />}
+                {busy && check?.kind !== "audio" && <motion.div className="scan" initial={{ top: "-30%" }} animate={{ top: "100%" }} transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }} />}
+              </div>
+              <div className="filemeta">
+                <span className="name">{file.name}</span>
+                <span className="faint mono" style={{ fontSize: 13 }}>{formatBytes(file.size)}</span>
+              </div>
 
-      {file && (
-        <section className="panel" aria-label="Selected file">
-          <div className="preview">
-            <div className="media">
-              {check?.kind === "video" && url && <video src={url} controls preload="metadata" />}
-              {check?.kind === "image" && url && <img src={url} alt="Preview of the selected image" />}
-              {check?.kind === "audio" && url && <audio src={url} controls preload="metadata" />}
-              {!check?.kind && <Icon name="file" size={40} />}
-            </div>
-            <div style={{ display: "grid", gap: 14 }}>
-              <dl className="facts">
-                <dt>File</dt><dd className="mono">{file.name}</dd>
-                <dt>Size</dt><dd>{formatBytes(file.size)}</dd>
-                <dt>Type</dt><dd>{check?.kind ? KIND_LABEL[check.kind] : "unsupported"} <span className="faint">({file.type || "unknown MIME"})</span></dd>
-              </dl>
-              {problems.length > 0 && <div className="errbox" role="alert"><b>This file cannot be analyzed</b><ul>{problems.map((p) => <li key={p}>{p}</li>)}</ul></div>}
-              {!problems.length && view.s !== "error" && (
-                <>
-                  <label className="check"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} disabled={busy} />
-                    <span>I have the right to analyze this file and I understand it is sent to the analysis server. Faces and voices of other people are personal data.</span></label>
-                  <div className="row">
-                    <button className="btn primary" disabled={!consent || busy || !modelsReady} onClick={() => void run()}>{busy ? "Analyzing…" : "Run analysis"}</button>
-                    <button className="btn" disabled={busy} onClick={() => input.current?.click()}>Replace file</button>
-                    <button className="btn ghost danger" disabled={busy} onClick={clear}><Icon name="close" size={15} /> Remove</button>
-                  </div>
-                </>
+              {check && check.errors.length > 0 && <div className="alert" role="alert">{check.errors.map((p) => <span key={p}>{p}</span>)}</div>}
+              {view.s === "error" && <div className="alert" role="alert"><b>The analysis did not complete</b><span>{describeError(view.error)}</span></div>}
+
+              {busy ? (
+                <ol className="steps" aria-live="polite">
+                  {steps.map((k) => {
+                    const i = steps.indexOf(k), ci = steps.indexOf(cur as Phase);
+                    const cls = i < ci ? "done" : i === ci ? "now" : "";
+                    return (
+                      <motion.li key={k} className={cls} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}>
+                        <span className="tick">{cls === "done" && <Icon name="check" size={11} />}</span>
+                        <span>{STEP_LABEL[k]}
+                          {k === "upload" && cls === "now" && view.s === "busy" && <span className="track" style={{ display: "block", marginTop: 6 }}><motion.i animate={{ width: `${view.progress * 100}%` }} /></span>}
+                        </span>
+                        <span className="faint mono" style={{ fontSize: 12 }}>{cls === "done" ? "done" : ""}</span>
+                      </motion.li>
+                    );
+                  })}
+                </ol>
+              ) : (
+                <div className="row">
+                  <button className="btn primary" disabled={!ready || !check?.kind || !!check?.errors.length} onClick={() => void run()}>
+                    {view.s === "error" ? "Try again" : "Analyze"} <Icon name="arrow" size={16} />
+                  </button>
+                  <button className="btn ghost" onClick={reset}>Choose another</button>
+                </div>
               )}
-              {view.s === "error" && (
-                <div className="errbox" role="alert"><b>The analysis did not complete</b><span>{describeError(view.error)}</span>
-                  <small className="faint">Code: {view.error.code}</small>
-                  <div className="row"><button className="btn primary" onClick={() => void run()}><Icon name="refresh" size={15} /> Retry</button><button className="btn" onClick={clear}>Choose another file</button></div></div>
-              )}
-              {problems.length > 0 && <div className="row"><button className="btn" onClick={() => input.current?.click()}>Choose another file</button><button className="btn ghost" onClick={clear}>Remove</button></div>}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {view.s === "busy" && (
-        <section className="panel" aria-label="Progress" aria-live="polite">
-          <header><h2>Progress</h2><span className="faint mono">{Math.round((now - view.t0) / 1000)} s</span></header>
-          <ol className="steps">
-            {(["upload", "queued", ...stageList] as string[]).map((k) => {
-              const order = ["upload", "queued", ...stageList];
-              const cur = view.phase === "upload" ? "upload" : view.phase === "queued" ? "queued" : view.stage ?? "probing";
-              const ci = order.indexOf(cur), i = order.indexOf(k);
-              const cls = i < ci ? "done" : i === ci ? "now" : "";
-              return (
-                <li key={k} className={cls}><span className="dot" />
-                  <span>{k === "upload" ? "Uploading" : k === "queued" ? "Waiting for the analysis worker" : STAGE_LABEL[k] ?? k}
-                    {k === "upload" && view.phase === "upload" && <span className="bar-track" role="progressbar" aria-label="Upload progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((view.loaded / Math.max(1, view.total)) * 100)} style={{ display: "block", marginTop: 6 }}><i style={{ width: `${(view.loaded / Math.max(1, view.total)) * 100}%` }} /></span>}
-                  </span>
-                  <span className="faint mono">{k === "upload" && view.phase === "upload" ? `${formatBytes(view.loaded)} / ${formatBytes(view.total)}` : cls === "done" ? "done" : cls === "now" ? "in progress" : ""}</span>
-                </li>);
-            })}
-          </ol>
-          <div className="row" style={{ marginTop: 12 }}>
-            {view.phase === "upload" ? <button className="btn" onClick={() => abort.current?.abort()}>Cancel upload</button> : <small className="faint">The server cannot cancel an analysis once it has started.</small>}
-          </div>
-        </section>
-      )}
-    </div>
+              {busy && view.s === "busy" && view.phase === "upload" && <button className="btn ghost small" onClick={() => abort.current?.abort()}>Cancel</button>}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </section>
   );
 }

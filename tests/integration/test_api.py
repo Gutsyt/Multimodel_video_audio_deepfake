@@ -3,7 +3,7 @@
 TEST DOUBLES: unless a test says otherwise, detectors are stubs from ``tests/stubs.py`` that return
 fixed numbers (their model cards carry ``is_test_fixture=True``). These tests verify upload
 validation, job lifecycle, status handling and cleanup. They say NOTHING about detection quality.
-The one test marked "REAL WEIGHTS" runs the vendored pretrained AASIST through the API.
+The test marked real_models runs the trained heads and real backbones through the API.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from avdd.api.app import create_app
 from avdd.api.models import DetectorManager, bundle_from_detectors
 from avdd.api.settings import Settings
 from avdd.api.store import Store
-from avdd.video.faces import HaarFaceDetector
+from avdd.video.faces import YuNetFaceDetector
 from tests.conftest import requires_ffmpeg
 from tests.integration.helpers import OCTET, Api, doubles
 from tests.stubs import BlockingAudio, StubAudio, StubBoxes, StubFace
@@ -47,14 +47,14 @@ def test_health_ready_capabilities(make_api: Callable[..., Api]) -> None:
     assert api.c.get("/api/health").json() == {"status": "ok"}
     assert api.c.get("/api/ready").status_code == 200
     cap = api.c.get("/api/capabilities").json()
-    assert cap["models_state"] == "ready" and cap["stages"] == ["probing", "audio", "visual", "fusion"]
+    assert cap["models_state"] == "ready" and cap["stages"] == ["probing", "audio", "visual", "verdict"]
     assert {m["role"]: m["state"] for m in cap["models"]} == {"audio": "loaded", "visual": "loaded"}
     assert all(m["card"]["is_test_fixture"] for m in cap["models"])
     assert cap["limits"]["max_duration_s"] == 60.0 and "mov" in cap["limits"]["accepted_containers"]
     assert set(cap["limits"]["accepted"]) == {"video", "audio", "image"}
     assert ".wav" in cap["limits"]["accepted"]["audio"]["extensions"]
     assert ".png" in cap["limits"]["accepted"]["image"]["extensions"]
-    assert "No training" in cap["evaluation_status"] and "deleted" in cap["retention"]
+    assert "calibrated" in cap["evaluation_status"] and "deleted" in cap["retention"]
 
 
 def test_cors_allows_the_vite_dev_origin(make_api: Callable[..., Api]) -> None:
@@ -74,8 +74,7 @@ def test_successful_analysis_lifecycle_with_doubles(make_api: Callable[..., Api]
     res = job["result"]
     assert res["is_test_fixture"] is True and res["outcome"] == "analyzed"
     assert res["modalities"]["audio"]["status"] == res["modalities"]["visual"]["status"] == "available"
-    assert res["fusion"]["state"] == "multimodal" and res["fusion"]["fused_score"] == pytest.approx(0.5)
-    assert res["fusion"]["calibrated"] is False and res["interpretation"]["validated_on_project_data"] is False
+    assert res["assessment"]["basis"] == "multimodal" and res["assessment"]["verdict"] == "likely_manipulated"
     assert res["modalities"]["audio"]["segments"][0]["start_s"] == 0.0
     assert all("t_s" in f for f in res["modalities"]["visual"]["frames"])
     text = json.dumps(job)
@@ -83,10 +82,10 @@ def test_successful_analysis_lifecycle_with_doubles(make_api: Callable[..., Api]
     api.assert_clean()
 
     hist = api.c.get("/api/analyses").json()["items"]
-    assert hist[0]["id"] == job["id"] and hist[0]["fusion_state"] == "multimodal" and hist[0]["is_test_fixture"] is True
+    assert hist[0]["id"] == job["id"] and hist[0]["basis"] == "multimodal" and hist[0]["is_test_fixture"] is True
     rep = api.c.get(f"/api/analyses/{job['id']}/report")
     assert rep.status_code == 200 and "attachment" in rep.headers["content-disposition"]
-    assert rep.json()["result"]["fusion"]["state"] == "multimodal"
+    assert rep.json()["result"]["assessment"]["basis"] == "multimodal"
     assert api.c.delete(f"/api/analyses/{job['id']}").status_code == 204
     assert api.c.get(f"/api/analyses/{job['id']}").status_code == 404
     assert api.c.get("/api/analyses").json()["items"] == []
@@ -113,31 +112,28 @@ def test_video_without_audio_track(make_api: Callable[..., Api], face_dir: Path)
     res = make_api(doubles()).run(face_dir / "face_noaudio.mp4")["result"]
     a = res["modalities"]["audio"]
     assert a["status"] == "missing" and a["score"] is None
-    assert res["fusion"]["state"] == "single_modality" and res["fusion"]["fused_score"] is None
     assert res["assessment"]["basis"] == "visual_only" and res["assessment"]["score"] == pytest.approx(0.2)
-    assert res["fusion"]["excluded_modalities"] == {"audio": "missing"}
+    assert res["modalities"]["audio"]["status"] == "missing"
 
 
 def test_audio_only_media_has_missing_visual(make_api: Callable[..., Api], audio_only_mp4: Path) -> None:
     res = make_api(doubles()).run(audio_only_mp4)["result"]
     assert res["modalities"]["visual"]["status"] == "missing" and res["modalities"]["visual"]["score"] is None
-    assert res["fusion"]["state"] == "single_modality" and res["fusion"]["fused_score"] is None
     assert res["assessment"]["basis"] == "audio_only" and res["assessment"]["score"] == pytest.approx(0.8)
 
 
 def test_silent_audio_is_unreliable_not_authentic(make_api: Callable[..., Api], face_dir: Path) -> None:
     res = make_api(doubles()).run(face_dir / "face_silent.mp4")["result"]
     assert res["modalities"]["audio"]["status"] == "unreliable" and res["modalities"]["audio"]["score"] is None
-    assert res["fusion"]["excluded_modalities"] == {"audio": "unreliable"}
+    assert res["modalities"]["audio"]["status"] == "unreliable"
 
 
 def test_no_face_makes_visual_unreliable_and_nothing_usable_is_insufficient(make_api: Callable[..., Api], media_dir: Path) -> None:
     # testsrc pattern has no face; with no audio track either, nothing usable remains.
-    api = make_api(bundle_from_detectors(StubAudio(), StubFace(), HaarFaceDetector()))
+    api = make_api(bundle_from_detectors(StubAudio(), StubFace(), YuNetFaceDetector()))
     res = api.run(media_dir / "video_only.mp4")["result"]
     assert res["modalities"]["visual"]["status"] == "unreliable" and res["modalities"]["audio"]["status"] == "missing"
-    assert res["fusion"]["state"] == "insufficient_evidence" and res["fusion"]["fused_score"] is None
-    assert res["fusion"]["flagged_at_default_threshold"] is None
+    assert res["assessment"]["verdict"] == "insufficient_evidence" and res["assessment"]["score"] is None
 
 
 # ---------------------------------------------------------------- upload validation
@@ -194,18 +190,18 @@ def test_partial_model_failure_is_visible_and_not_authentic(make_api: Callable[.
     assert audio["state"] == "failed" and audio["error_code"] == "weights_incompatible"
     res = api.run(face_dir / "face_audio.mp4")["result"]
     assert res["modalities"]["audio"]["status"] == "not_analyzed" and res["modalities"]["audio"]["score"] is None
-    assert res["fusion"]["state"] == "single_modality" and res["fusion"]["excluded_modalities"] == {"audio": "not_analyzed"}
+    assert res["assessment"]["basis"] == "visual_only"
 
 
 def test_real_loader_failure_reports_unavailable(make_api: Callable[..., Api], tmp_path: Path, monkeypatch: pytest.MonkeyPatch, face_dir: Path) -> None:
-    monkeypatch.setenv("AVDD_THIRD_PARTY_DIR", str(tmp_path / "does_not_exist"))
-    api = make_api(None, audio_model="AASIST", video_model="none")  # real loader, vendored files unreachable
-    end = time.time() + 20
+    monkeypatch.setattr("avdd.audio.ssl_detector.ASSETS", tmp_path / "does_not_exist")
+    api = make_api(None, audio_model="xlsr", video_model="none")  # real loader, trained head missing
+    end = time.time() + 60  # cold transformers import can be slow
     while api.c.get("/api/capabilities").json()["models_state"] == "loading" and time.time() < end:
         time.sleep(0.05)
     cap = api.c.get("/api/capabilities").json()
     assert cap["models_state"] == "unavailable"
-    assert next(m for m in cap["models"] if m["role"] == "audio")["error_code"] in ("files_missing", "torch_missing")
+    assert next(m for m in cap["models"] if m["role"] == "audio")["error_code"] in ("head_missing", "deps_missing")
     assert api.c.get("/api/ready").status_code == 503
     r = api.upload(face_dir / "face_audio.mp4")
     assert r.status_code == 503 and r.json()["error"]["code"] == "no_models_available"
@@ -301,21 +297,23 @@ def test_error_shape_for_unknown_ids_and_routes(make_api: Callable[..., Api]) ->
     assert api.c.get("/api/analyses/" + "b" * 32 + "/report").status_code == 404
 
 
-# ---------------------------------------------------------------- REAL WEIGHTS
-def test_real_weights_through_the_api_not_test_doubles(make_api: Callable[..., Api], face_dir: Path) -> None:
-    """REAL WEIGHTS: vendored pretrained AASIST-L inference through the HTTP API.
-
-    Input is a synthetic sine tone, so the score itself is meaningless; this checks that real
-    model inference is wired end to end and is not flagged as a test fixture.
-    """
+# ---------------------------------------------------------------- REAL MODELS
+@pytest.mark.real_models
+def test_real_models_through_the_api(make_api: Callable[..., Api], face_dir: Path) -> None:
+    """Trained heads + real backbones end to end (synthetic input: wiring only, not accuracy)."""
     pytest.importorskip("torch")
-    from avdd.audio.aasist_detector import AasistDetector
+    from avdd.audio.ssl_detector import SslAudioDetector
+    from avdd.common.errors import AvddError
+    from avdd.video.clip_detector import ClipFaceDetector
 
-    det = AasistDetector("AASIST-L")
-    det.load()
-    api = make_api(bundle_from_detectors(det, None, None))
-    res = api.run(face_dir / "face_audio.mp4")["result"]
-    assert res["is_test_fixture"] is False and res["models"][0]["name"] == "AASIST-L"
-    assert res["modalities"]["audio"]["status"] == "available" and 0.0 <= res["modalities"]["audio"]["score"] <= 1.0
-    assert res["modalities"]["visual"]["status"] == "not_analyzed" and res["fusion"]["state"] == "single_modality"
+    audio, visual = SslAudioDetector(), ClipFaceDetector()
+    try:
+        audio.load()
+        visual.load()
+    except AvddError as exc:
+        pytest.skip(f"real models unavailable: {exc.code}")
+    api = make_api(bundle_from_detectors(audio, visual, YuNetFaceDetector()))
+    res = api.run(face_dir / "face_audio.mp4", timeout=300)["result"]  # real CLIP-L/14 on CPU, cold
+    assert res["is_test_fixture"] is False and res["models"][0]["metrics"]["tests"]
+    assert res["modalities"]["visual"]["status"] == "available" and 0.0 <= res["modalities"]["visual"]["score"] <= 1.0
     api.assert_clean()

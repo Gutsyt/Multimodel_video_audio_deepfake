@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 ModalityStatusName = Literal["available", "missing", "corrupted", "unreliable", "not_analyzed"]
 JobStatus = Literal["queued", "processing", "completed", "failed"]
+Verdict = Literal["likely_authentic", "inconclusive", "likely_manipulated", "insufficient_evidence"]
 
 
 class ApiErrorBody(BaseModel):
@@ -30,6 +31,7 @@ class ModelCardOut(BaseModel):
     trained_on: str
     limitations: list[str]
     is_test_fixture: bool
+    metrics: dict[str, Any] | None = None
 
 
 class MediaInfo(BaseModel):
@@ -53,8 +55,6 @@ class AudioSegment(BaseModel):
     start_s: float
     end_s: float
     score: float
-    logits: dict[str, float] | None = None
-    class_probs: dict[str, float] | None = None
 
 
 class FaceBoxOut(BaseModel):
@@ -72,12 +72,10 @@ class FrameEvidence(BaseModel):
     face_area_ratio: float | None = None
     crop_px: list[int] | None = None
     score: float | None = None
-    logits: dict[str, float] | None = None
-    class_probs: dict[str, float] | None = None
 
 
 class ModalityResult(BaseModel):
-    """One modality. ``score`` is a RAW model score and is only present when status is 'available'."""
+    """One modality. ``score`` is a calibrated P(fake), present only when status is 'available'."""
 
     status: ModalityStatusName
     score: float | None = None
@@ -85,7 +83,7 @@ class ModalityResult(BaseModel):
     aggregation: str | None = None
     runtime_s: float | None = None
     error_code: str | None = None
-    decision: Literal["flagged", "not_flagged"] | None = None  # this branch alone, at the default threshold
+    verdict: Verdict | None = None  # this branch alone, at its own validated thresholds
     source: Literal["video", "image"] | None = None  # visual branch only
     model: ModelCardOut | None = None
     analyzed_limit_s: float | None = None
@@ -106,45 +104,14 @@ class ModalityResult(BaseModel):
     timestamps: str | None = None
 
 
-class FusionOut(BaseModel):
-    method: str
-    rule: str | None = None
-    fusion_performed: bool | None = None  # None only for results stored before schema 0.2
-    configured_weights: dict[str, float] = {}
-    state: Literal["insufficient_evidence", "single_modality", "multimodal"]
-    fused_score: float | None = None
-    flagged_at_default_threshold: bool | None = None
-    threshold: float
-    weights_used: dict[str, float]
-    branch_flags_at_default_threshold: dict[str, bool]
-    excluded_modalities: dict[str, str]
-    weights_validated: bool
-    threshold_validated: bool
-    calibrated: bool
-    notes: list[str]
-
-
 class AssessmentOut(BaseModel):
-    status: Literal["flagged", "not_flagged", "insufficient_evidence"]
+    verdict: Verdict
     basis: Literal["multimodal", "audio_only", "visual_only", "none"]
     summary: str
-    branches_agree: bool | None = None  # multimodal only: do both branches land on the same side of the threshold
     score: float | None = None
-    score_kind: str | None = None
-    threshold: float
-    threshold_validated: bool
-    branch_decisions: dict[str, str | None]
+    branch_verdicts: dict[str, Verdict | None]
+    thresholds: dict[str, dict[str, float]]
     modalities_used: list[str]
-    calibrated: bool
-    not_authenticity_note: str
-
-
-class Interpretation(BaseModel):
-    score_meaning: str
-    calibrated: bool
-    validated_on_project_data: bool
-    flag_meaning: str
-    not_forensic_proof: str
 
 
 class AnalysisResult(BaseModel):
@@ -154,11 +121,9 @@ class AnalysisResult(BaseModel):
     outcome: Literal["analyzed", "unreadable_media"]
     media: MediaInfo
     modalities: dict[str, ModalityResult]
-    fusion: FusionOut
-    assessment: AssessmentOut | None = None  # absent in results stored before schema 0.2
+    assessment: AssessmentOut
     models: list[ModelCardOut]
     is_test_fixture: bool
-    interpretation: Interpretation
     analyzed_limit_s: float
     total_runtime_s: float
 
@@ -185,13 +150,9 @@ class AnalysisSummary(BaseModel):
     created_utc: str
     duration_s: float | None = None
     media_kind: str | None = None
-    assessment_status: str | None = None
+    verdict: str | None = None
     basis: str | None = None
-    audio_decision: str | None = None
-    visual_decision: str | None = None
-    fusion_state: str | None = None
-    fused_score: float | None = None
-    flagged: bool | None = None
+    score: float | None = None
     audio_status: str | None = None
     audio_score: float | None = None
     visual_status: str | None = None

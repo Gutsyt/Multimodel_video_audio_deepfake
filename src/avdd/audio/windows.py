@@ -1,4 +1,4 @@
-"""Split a waveform into the fixed-length windows AASIST expects."""
+"""Split a waveform into fixed 4 s windows."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 
 from avdd.audio.extract import SAMPLE_RATE
 
-WINDOW_SAMPLES = 64_600  # ~4.04 s at 16 kHz; fixed by the pretrained AASIST configuration
+WINDOW_SAMPLES = 64_000  # 4 s at 16 kHz: the window length the audio head was trained on
 
 
 @dataclass(frozen=True)

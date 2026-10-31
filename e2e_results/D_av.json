@@ -1,0 +1,242 @@
+[
+ {
+  "file": "av_0.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.018196861003928713
+ },
+ {
+  "file": "av_1.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.008288658222347273
+ },
+ {
+  "file": "av_10.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.1436259878486955
+ },
+ {
+  "file": "av_11.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.8044788333025898
+ },
+ {
+  "file": "av_12.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.28889501972669
+ },
+ {
+  "file": "av_13.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.5667299852654355
+ },
+ {
+  "file": "av_14.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.09000825388031355
+ },
+ {
+  "file": "av_15.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.05657753093711224
+ },
+ {
+  "file": "av_16.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.563361078695729
+ },
+ {
+  "file": "av_17.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.13041664953465423
+ },
+ {
+  "file": "av_18.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.1571112220931911
+ },
+ {
+  "file": "av_19.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.4796790817985803
+ },
+ {
+  "file": "av_2.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0878594036707625
+ },
+ {
+  "file": "av_20.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.1448835283844329
+ },
+ {
+  "file": "av_21.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0022449402586946525
+ },
+ {
+  "file": "av_22.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.12012277046576725
+ },
+ {
+  "file": "av_23.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.023811086337164465
+ },
+ {
+  "file": "av_24.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.04211374413098978
+ },
+ {
+  "file": "av_25.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.19475724617537804
+ },
+ {
+  "file": "av_26.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.27423602100912864
+ },
+ {
+  "file": "av_27.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.01851537886172329
+ },
+ {
+  "file": "av_28.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.005803262782938332
+ },
+ {
+  "file": "av_29.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.2730627371463559
+ },
+ {
+  "file": "av_3.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.04204241942283937
+ },
+ {
+  "file": "av_30.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.09591899755514788
+ },
+ {
+  "file": "av_31.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.030809583333617593
+ },
+ {
+  "file": "av_32.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.27613817071119334
+ },
+ {
+  "file": "av_33.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.10588491523980219
+ },
+ {
+  "file": "av_34.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.36120229682216365
+ },
+ {
+  "file": "av_35.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.06744144588717223
+ },
+ {
+  "file": "av_36.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.02055176965690086
+ },
+ {
+  "file": "av_37.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.02606002718924488
+ },
+ {
+  "file": "av_38.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.3007300292683607
+ },
+ {
+  "file": "av_39.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.3394367977030484
+ },
+ {
+  "file": "av_4.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.05738704583701067
+ },
+ {
+  "file": "av_5.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.6737922321636995
+ },
+ {
+  "file": "av_6.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.013631652083740455
+ },
+ {
+  "file": "av_7.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.016001401378843372
+ },
+ {
+  "file": "av_8.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.047908894122107394
+ },
+ {
+  "file": "av_9.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.3641758399512866
+ }
+]

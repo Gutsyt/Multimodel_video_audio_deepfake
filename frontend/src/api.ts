@@ -1,9 +1,7 @@
 // Typed client for the avdd backend. Every value shown in the UI comes from these calls.
 export type ModalityStatus = "available" | "missing" | "corrupted" | "unreliable" | "not_analyzed";
 export type JobStatus = "queued" | "processing" | "completed" | "failed";
-export type FusionState = "insufficient_evidence" | "single_modality" | "multimodal";
-export type Decision = "flagged" | "not_flagged";
-export type AssessmentStatus = Decision | "insufficient_evidence";
+export type Verdict = "likely_authentic" | "inconclusive" | "likely_manipulated" | "insufficient_evidence";
 export type Basis = "multimodal" | "audio_only" | "visual_only" | "none";
 export type MediaKind = "video" | "audio" | "image";
 
@@ -11,33 +9,28 @@ export interface ApiErrorBody { code: string; message: string; details?: Record<
 export interface ModelCard {
   name: string; version: string; modality: string; license: string; source_url: string;
   citation: string; trained_on: string; limitations: string[]; is_test_fixture: boolean;
+  metrics?: HeadMetrics | null;
 }
+export interface SetMetrics {
+  n_real: number; n_fake: number; auc: number | null; eer: number | null;  // null: not computable (single-class set)
+  genuine_flagged?: number; genuine_cleared?: number; fake_flagged?: number; fake_cleared?: number;
+}
+export interface HeadMetrics { layer: number; t_fake: number; t_real: number; validation: SetMetrics; tests: Record<string, SetMetrics> }
 export interface MediaInfo {
   kind?: MediaKind | null; container: string | null; duration_s: number | null; has_video: boolean; has_audio: boolean;
   width: number | null; height: number | null; fps: number | null; sample_rate: number | null;
   video_codec?: string | null; audio_codec?: string | null; channels?: number | null;
 }
-export type ClassValues = Record<string, number>;
-export interface AudioSegment { start_s: number; end_s: number; score: number; logits?: ClassValues | null; class_probs?: ClassValues | null }
+export interface AudioSegment { start_s: number; end_s: number; score: number }
 export interface FrameEvidence {
   frame_index: number; t_s: number | null; n_faces: number; score: number | null;
   face_box?: { x: number; y: number; w: number; h: number } | null;
-  face_area_ratio?: number | null; crop_px?: number[] | null; logits?: ClassValues | null; class_probs?: ClassValues | null;
+  face_area_ratio?: number | null; crop_px?: number[] | null;
 }
-export interface OutputSemantics {
-  class_labels: string[]; score_class: string; score_class_index: number; activation?: string;
-  reference?: string; higher_means?: string;
-}
-export interface BranchDiagnostics {
-  source?: string;
-  input?: Record<string, string | number | boolean | null>;
-  output_semantics?: OutputSemantics | null;
-  windows?: Record<string, number | string>;
-  scores?: Record<string, number | string>;
-}
+export type BranchDiagnostics = Record<string, unknown>;
 export interface ModalityResult {
   status: ModalityStatus; score: number | null; reasons: string[]; aggregation?: string | null;
-  decision?: Decision | null; source?: "video" | "image" | null; error_code?: string | null;
+  verdict?: Verdict | null; source?: "video" | "image" | null; error_code?: string | null;
   runtime_s?: number | null; model?: ModelCard | null; analyzed_limit_s?: number | null;
   diagnostics?: BranchDiagnostics | null;
   segments?: AudioSegment[] | null; n_windows?: number | null; max_window_score?: number | null;
@@ -46,27 +39,15 @@ export interface ModalityResult {
   face_detector?: string | null; median_frame_score?: number | null; max_frame_score?: number | null;
   timestamps?: string | null;
 }
-export interface Fusion {
-  method: string; rule?: string | null; fusion_performed?: boolean | null; configured_weights?: Record<string, number>;
-  state: FusionState; fused_score: number | null;
-  flagged_at_default_threshold: boolean | null; threshold: number;
-  weights_used: Record<string, number>; branch_flags_at_default_threshold: Record<string, boolean>;
-  excluded_modalities: Record<string, string>; weights_validated: boolean; threshold_validated: boolean;
-  calibrated: boolean; notes: string[];
-}
 export interface Assessment {
-  status: AssessmentStatus; basis: Basis; summary: string; branches_agree?: boolean | null; score: number | null; score_kind: string | null;
-  threshold: number; threshold_validated: boolean; branch_decisions: Record<string, string | null>;
-  modalities_used: string[]; calibrated: boolean; not_authenticity_note: string;
-}
-export interface Interpretation {
-  score_meaning: string; calibrated: boolean; validated_on_project_data: boolean;
-  flag_meaning: string; not_forensic_proof: string;
+  verdict: Verdict; basis: Basis; summary: string; score: number | null;
+  branch_verdicts: Record<string, Verdict | null>; thresholds: Record<string, { t_real: number; t_fake: number }>;
+  modalities_used: string[];
 }
 export interface AnalysisResult {
   schema_version: string; avdd_version: string; created_utc: string; outcome: "analyzed" | "unreadable_media";
-  media: MediaInfo; modalities: Record<string, ModalityResult>; fusion: Fusion; assessment?: Assessment | null;
-  models: ModelCard[]; is_test_fixture: boolean; interpretation: Interpretation; analyzed_limit_s: number; total_runtime_s: number;
+  media: MediaInfo; modalities: Record<string, ModalityResult>; assessment: Assessment;
+  models: ModelCard[]; is_test_fixture: boolean; analyzed_limit_s: number; total_runtime_s: number;
 }
 export interface AnalysisStatus {
   id: string; status: JobStatus; stage: string | null; stages: string[]; created_utc: string;
@@ -74,9 +55,7 @@ export interface AnalysisStatus {
 }
 export interface AnalysisSummary {
   id: string; status: JobStatus; created_utc: string; duration_s: number | null; media_kind?: string | null;
-  assessment_status?: string | null; basis?: string | null; audio_decision?: string | null; visual_decision?: string | null;
-  fusion_state: string | null;
-  fused_score: number | null; flagged: boolean | null; audio_status: string | null; audio_score: number | null;
+  verdict?: Verdict | null; basis?: string | null; score?: number | null; audio_status: string | null; audio_score: number | null;
   visual_status: string | null; visual_score: number | null; is_test_fixture: boolean | null; error_code: string | null;
 }
 export interface ModelStatus {
@@ -188,5 +167,3 @@ export async function waitForAnalysis(
   }
 }
 
-/** Kept for the existing end-to-end test. */
-export const uploadVideo = uploadMedia;

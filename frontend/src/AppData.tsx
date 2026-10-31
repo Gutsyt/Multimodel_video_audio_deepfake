@@ -54,13 +54,3 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [caps, capsError, history, historyLoaded, historyError, refreshHistory]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
-
-export type RunTone = "flagged" | "not_flagged" | "insufficient_evidence" | "failed";
-/** Overall state of a stored record, from the summary only (older records fall back to fusion fields). */
-export function toneOf(s: AnalysisSummary): RunTone | "running" {
-  if (s.status === "failed") return "failed";
-  if (s.status !== "completed") return "running";
-  if (s.assessment_status === "flagged" || s.assessment_status === "not_flagged" || s.assessment_status === "insufficient_evidence") return s.assessment_status;
-  if (s.fusion_state === "insufficient_evidence") return "insufficient_evidence";
-  return s.flagged ? "flagged" : "not_flagged";
-}
