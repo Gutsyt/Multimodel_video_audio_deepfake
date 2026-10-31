@@ -209,15 +209,43 @@ def _group_scores(p: Any, y: Any, g: Any) -> tuple[Any, Any]:
 def _metrics(p: Any, y: Any, t_fake: float | None = None, t_real: float | None = None) -> dict[str, float]:
     from sklearn.metrics import roc_auc_score, roc_curve
 
+    n_real = int((y == 0).sum())
+    n_fake = int((y == 1).sum())
+
+    # Safeguard against single-class splits (missing real or fake samples)
+    if len(np.unique(y)) < 2:
+        m = {"n_real": n_real, "n_fake": n_fake, "auc": float("nan"), "eer": float("nan")}
+        if t_fake is not None and t_real is not None:
+            real, fake = p[y == 0], p[y == 1]
+            m |= {
+                "genuine_flagged": round(float((real >= t_fake).mean()), 4) if len(real) > 0 else 0.0,
+                "genuine_cleared": round(float((real <= t_real).mean()), 4) if len(real) > 0 else 0.0,
+                "fake_flagged": round(float((fake >= t_fake).mean()), 4) if len(fake) > 0 else 0.0,
+                "fake_cleared": round(float((fake <= t_real).mean()), 4) if len(fake) > 0 else 0.0,
+            }
+        return m
+
     fpr, tpr, _ = roc_curve(y, p)
-    eer = float(fpr[np.nanargmin(np.abs(fpr - (1 - tpr)))])
-    m = {"n_real": int((y == 0).sum()), "n_fake": int((y == 1).sum()), "auc": round(float(roc_auc_score(y, p)), 4), "eer": round(eer, 4)}
+    diff = np.abs(fpr - (1 - tpr))
+    
+    if len(diff) == 0 or np.all(np.isnan(diff)):
+        eer = float("nan")
+    else:
+        eer = float(fpr[np.nanargmin(diff)])
+
+    try:
+        auc = round(float(roc_auc_score(y, p)), 4)
+    except ValueError:
+        auc = float("nan")
+
+    m = {"n_real": n_real, "n_fake": n_fake, "auc": auc, "eer": round(eer, 4) if not np.isnan(eer) else float("nan")}
+    
     if t_fake is not None and t_real is not None:
         real, fake = p[y == 0], p[y == 1]
-        m |= {"genuine_flagged": round(float((real >= t_fake).mean()), 4),
-              "genuine_cleared": round(float((real <= t_real).mean()), 4),
-              "fake_flagged": round(float((fake >= t_fake).mean()), 4),
-              "fake_cleared": round(float((fake <= t_real).mean()), 4)}  # fmt: skip
+        m |= {"genuine_flagged": round(float((real >= t_fake).mean()), 4) if len(real) > 0 else 0.0,
+              "genuine_cleared": round(float((real <= t_real).mean()), 4) if len(real) > 0 else 0.0,
+              "fake_flagged": round(float((fake >= t_fake).mean()), 4) if len(fake) > 0 else 0.0,
+              "fake_cleared": round(float((fake <= t_real).mean()), 4) if len(fake) > 0 else 0.0}
     return m
 
 
