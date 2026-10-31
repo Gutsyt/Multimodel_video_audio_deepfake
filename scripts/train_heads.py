@@ -54,7 +54,6 @@ def _crop_or_whole(img_bgr: Any, fd: Any) -> Any:
 def visual_items(data: Path, fd: Any, frames_per_video: int, done: frozenset[str] = frozenset()) -> Iterator[tuple[str, Any, int, str]]:
     """Yield (source, face crop, label, group) one at a time, so memory stays flat."""
     import cv2
-    import pyarrow.parquet as pq
 
     from avdd.video.frames import sample_frames
 
@@ -87,6 +86,8 @@ def visual_items(data: Path, fd: Any, frames_per_video: int, done: frozenset[str
                     if img is not None:
                         yield part, _crop_or_whole(img, fd), label, f"wdf_{tf.stem}_{seq}"
     for pf in sorted((data / "celeb-df-image-dataset" / "data").glob("*.parquet")):
+        import pyarrow.parquet as pq  # only the Celeb-DF frames need it (train extra)
+
         part = "celeb_test" if pf.name.startswith("test") else "celeb"
         if part in done:
             continue
