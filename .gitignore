@@ -12,9 +12,9 @@ data/
 checkpoints/
 *.pt
 *.pth
-!third_party/aasist/weights/*.pth
 *.ckpt
 *.onnx
+!src/avdd/assets/*.onnx
 *.mp4
 *.avi
 *.mov
@@ -34,3 +34,4 @@ app_data/
 env_report.json
 result.json
 pytest_output.txt
+frontend/dist/

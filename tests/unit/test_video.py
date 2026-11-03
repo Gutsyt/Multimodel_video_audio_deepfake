@@ -11,7 +11,7 @@ pytest.importorskip("cv2")
 from avdd.common.errors import VideoError
 from avdd.common.types import ModalityStatus
 from avdd.video.branch import run_video_branch
-from avdd.video.faces import HaarFaceDetector, crop_face_rgb
+from avdd.video.faces import YuNetFaceDetector, crop_face_rgb
 from avdd.video.frames import sample_frames
 from tests.conftest import requires_ffmpeg
 from tests.stubs import StubBoxes, StubFace
@@ -32,7 +32,7 @@ def test_sample_frames_corrupt_raises(media_dir: Path) -> None:
 
 
 def test_haar_finds_the_public_domain_test_face_and_not_a_test_pattern(face_dir: Path, media_dir: Path) -> None:
-    det = HaarFaceDetector()
+    det = YuNetFaceDetector()
     face_frame = sample_frames(face_dir / "face_noaudio.mp4", 1)[0].image_bgr
     boxes = det.detect(face_frame)
     assert len(boxes) >= 1
@@ -43,17 +43,17 @@ def test_haar_finds_the_public_domain_test_face_and_not_a_test_pattern(face_dir:
 
 def test_branch_available_with_per_frame_timestamps(face_dir: Path) -> None:
     det = StubFace(0.3)
-    out = run_video_branch(face_dir / "face_noaudio.mp4", det, HaarFaceDetector())
+    out = run_video_branch(face_dir / "face_noaudio.mp4", det, YuNetFaceDetector())
     assert out.evidence.status is ModalityStatus.AVAILABLE and out.evidence.score == pytest.approx(0.3)
     frames = out.details["frames"]
     assert all("t_s" in f and "n_faces" in f for f in frames)
     assert all(f["score"] == 0.3 for f in frames if f["n_faces"])
-    assert out.details["face_detector"] == "opencv-haar-frontalface-default"
+    assert out.details["face_detector"] == "yunet-2023mar"
 
 
 def test_branch_no_face_is_unreliable_not_real(media_dir: Path) -> None:
     det = StubFace()
-    out = run_video_branch(media_dir / "video_only.mp4", det, HaarFaceDetector())
+    out = run_video_branch(media_dir / "video_only.mp4", det, YuNetFaceDetector())
     assert out.evidence.status is ModalityStatus.UNRELIABLE and out.evidence.score is None
     assert det.calls == 0 and "faces found in 0 of" in out.evidence.reasons[0]
 

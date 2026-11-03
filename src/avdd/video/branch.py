@@ -19,15 +19,15 @@ from avdd.video.faces import FaceBoxDetector, crop_face_rgb
 from avdd.video.frames import SampledFrame, load_image_frame, sample_frames
 
 logger = logging.getLogger(__name__)
-AGGREGATION = "mean of per-frame raw scores over sampled frames with a detected face"
-IMAGE_AGGREGATION = "raw score of the single detected face in the image"
+AGGREGATION = "median of per-frame calibrated scores over sampled frames with a detected face"
+IMAGE_AGGREGATION = "calibrated score of the largest detected face in the image"
 SATURATION_LEVEL = 0.99
 DISAGREEMENT_RANGE = 0.5  # max-min across frames at/above this is called out; it changes no score
 
 
 @dataclass(frozen=True)
 class VideoBranchConfig:
-    n_frames: int = 16
+    n_frames: int = 12
     max_seconds: float = 60.0
     min_face_frames: int = 4
     min_face_fraction: float = 0.3
@@ -117,8 +117,7 @@ def _score_frames(
         "input": {
             "frame_width": fw, "frame_height": fh, "face_detector": face_detector.name,
             "face_selection": "largest detected face in each frame; other faces are ignored",
-            "crop_rule": f"square box around the face expanded by {cfg.face_margin:g} per side, then "
-                         "resized by the model's own image processor",
+            "crop_rule": f"square box around the face expanded by {cfg.face_margin:g} per side",
             "min_face_frames_required": needed, "device": device_of(detector),
         },
         "output_semantics": output_semantics_of(detector),
@@ -149,10 +148,6 @@ def _score_frames(
 
     for pos, it in zip(crop_pos, items, strict=True):
         infos[pos]["score"] = round(it.score, 4)
-        if it.logits is not None:
-            infos[pos]["logits"] = {k: round(v, 3) for k, v in it.logits.items()}
-        if it.probs is not None:
-            infos[pos]["class_probs"] = {k: round(v, 5) for k, v in it.probs.items()}
     caveats: list[str] = []
     multi = sum(1 for i in infos if i["n_faces"] > 1)
     if multi:
@@ -170,11 +165,10 @@ def _score_frames(
     if len(scores) > 1 and max(scores) - min(scores) >= DISAGREEMENT_RANGE:
         caveats.append(
             f"frame scores disagree strongly ({min(scores):.2f} to {max(scores):.2f}); "
-            "the mean hides this, so read the per-frame values"
+            "the median limits their effect, but read the per-frame values"
         )
     details["median_frame_score"] = round(statistics.median(scores), 4)
     details["max_frame_score"] = round(max(scores), 4)
     details["runtime_s"] = round(perf_counter() - t0, 3)
-    mean = sum(scores) / len(scores)
     return BranchOutput(ModalityEvidence(Modality.VISUAL, ModalityStatus.AVAILABLE,
-                                         score=mean, reasons=tuple(caveats)), details)  # fmt: skip
+                                         score=statistics.median(scores), reasons=tuple(caveats)), details)  # fmt: skip

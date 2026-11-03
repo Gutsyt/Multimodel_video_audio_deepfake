@@ -19,6 +19,11 @@ const PATHS: Record<string, ReactNode> = {
   print: <><path d="M7 9V3h10v6" /><rect x="4" y="9" width="16" height="8" rx="2" /><path d="M7 14h10v7H7z" /></>,
   refresh: <><path d="M20 11a8 8 0 0 0-14-4L4 9" /><path d="M4 4v5h5" /><path d="M4 13a8 8 0 0 0 14 4l2-2" /><path d="M20 20v-5h-5" /></>,
   file: <><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /></>,
+  face: <><circle cx="12" cy="12" r="9" /><path d="M9 10h.01M15 10h.01" /><path d="M8.5 15c1 1.2 2.2 1.8 3.5 1.8s2.5-.6 3.5-1.8" /></>,
+  voice: <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></>,
+  check: <><path d="m5 12 4.5 4.5L19 7" /></>,
+  arrow: <><path d="M5 12h14M13 6l6 6-6 6" /></>,
+  models: <><path d="M12 3 3 8l9 5 9-5z" /><path d="m3 13 9 5 9-5" /></>,
 };
 
 export type IconName = keyof typeof PATHS;
@@ -31,17 +36,13 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
   );
 }
 
-/** Brand mark: a waveform whose right half resolves into a face-detector grid. */
-export function BrandMark({ size = 34 }: { size?: number }) {
+/** Brand mark: a waveform resolving into a face frame. */
+export function BrandMark({ size = 30 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-      <rect x="1" y="1" width="38" height="38" rx="10" fill="var(--surface)" stroke="var(--line)" />
-      <g stroke="var(--signal)" strokeWidth="2.6" strokeLinecap="round">
-        <path d="M8 17v6" /><path d="M13 12v16" /><path d="M18 8v24" />
-      </g>
-      <g fill="none" stroke="var(--flag)" strokeWidth="1.8">
-        <rect x="23" y="11" width="10" height="10" rx="1.5" /><path d="M23 26h10M23 30h6" />
-      </g>
+      <rect x="1" y="1" width="38" height="38" rx="11" fill="var(--ink)" />
+      <g stroke="var(--paper)" strokeWidth="2.6" strokeLinecap="round"><path d="M9 17v6M14 13v14M19 10v20" /></g>
+      <rect x="24" y="13" width="9" height="14" rx="4.5" fill="none" stroke="var(--fake)" strokeWidth="2.2" />
     </svg>
   );
 }

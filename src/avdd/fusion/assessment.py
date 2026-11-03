@@ -1,93 +1,77 @@
-"""The overall assessment: one explicit vocabulary on top of per-branch evidence and fusion.
+"""Overall verdict from calibrated per-branch scores and their validated thresholds.
 
-``flagged``               a raw score reached the (unvalidated) default threshold.
-``not_flagged``           no usable score reached it. This does NOT mean the media is authentic.
-``insufficient_evidence`` no modality produced a usable score, so nothing can be said either way.
+Each branch score is a calibrated P(fake). Each branch has two thresholds chosen on validation
+data (``scripts/train_heads.py``): ``t_fake`` (at most ~2% of genuine media reach it) and
+``t_real`` (about 90% of genuine media fall at or below it).
 
-The basis says what the assessment rests on. With two usable branches it is the fused score
-(``multimodal``). With one it is that branch's own score (``audio_only`` / ``visual_only``) and it
-must never be presented as a multimodal result.
+  likely_manipulated     any usable branch >= its t_fake
+  likely_authentic       every usable branch <= its t_real
+  inconclusive           otherwise (in between, or the branches disagree)
+  insufficient_evidence  no usable branch
+
+Flagging on "any branch" keeps one-sided fakes (voice clone over real video, face swap over real
+voice) detectable; the low per-branch false-alarm rate keeps genuine media from being flagged.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from enum import Enum
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any
 
 from avdd.common.types import Modality, ModalityEvidence
-from avdd.fusion.score_fusion import FusionResult, FusionState
 
 
-class Decision(str, Enum):
-    FLAGGED = "flagged"
-    NOT_FLAGGED = "not_flagged"
-    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
+@dataclass(frozen=True)
+class Thresholds:
+    t_real: float = 0.3
+    t_fake: float = 0.7
+
+    def verdict(self, score: float) -> str:
+        if score >= self.t_fake:
+            return "likely_manipulated"
+        return "likely_authentic" if score <= self.t_real else "inconclusive"
 
 
-class Basis(str, Enum):
-    MULTIMODAL = "multimodal"
-    AUDIO_ONLY = "audio_only"
-    VISUAL_ONLY = "visual_only"
-    NONE = "none"
+def thresholds_of(detector: object) -> Thresholds:
+    """Thresholds from a detector's trained head; defaults for detectors without one (test doubles)."""
+    head = getattr(detector, "head", None)
+    return Thresholds(head.t_real, head.t_fake) if head is not None else Thresholds()
 
-
-NOT_AUTHENTICITY_NOTE = (
-    "'Not flagged' only means no usable score reached the default threshold. It does not mean the "
-    "media is authentic: the models are pretrained, unvalidated on this project's data, and can miss "
-    "manipulations, while genuine media can be flagged."
-)
 
 _SUMMARY = {
-    (Decision.FLAGGED, Basis.MULTIMODAL): "The fused raw score of the audio and visual branches is at or above the default threshold.",
-    (Decision.NOT_FLAGGED, Basis.MULTIMODAL): "The fused raw score of the audio and visual branches is below the default threshold.",
-    (Decision.FLAGGED, Basis.AUDIO_ONLY): "Audio-only result: the audio branch's raw score is at or above the default threshold. No visual evidence was usable and nothing was fused.",
-    (Decision.NOT_FLAGGED, Basis.AUDIO_ONLY): "Audio-only result: the audio branch's raw score is below the default threshold. No visual evidence was usable and nothing was fused.",
-    (Decision.FLAGGED, Basis.VISUAL_ONLY): "Visual-only result: the visual branch's raw score is at or above the default threshold. No audio evidence was usable and nothing was fused.",
-    (Decision.NOT_FLAGGED, Basis.VISUAL_ONLY): "Visual-only result: the visual branch's raw score is below the default threshold. No audio evidence was usable and nothing was fused.",
-    (Decision.INSUFFICIENT_EVIDENCE, Basis.NONE): "Neither the audio nor the visual branch produced usable evidence, so no assessment can be made. This is not evidence that the media is authentic.",
-}  # fmt: skip
+    "likely_manipulated": "Signs of manipulation were found",
+    "likely_authentic": "No signs of manipulation were found",
+    "inconclusive": "The evidence is mixed or borderline",
+    "insufficient_evidence": "Nothing could be analysed",
+}
+_WHAT = {Modality.AUDIO: "voice", Modality.VISUAL: "face"}
 
 
-def build_assessment(evidence: Sequence[ModalityEvidence], fusion: FusionResult) -> dict[str, Any]:
-    """Derive the overall assessment from branch evidence and the fusion result."""
-    usable = {e.modality: e for e in evidence if e.usable}
-    decisions: dict[str, str | None] = {
-        e.modality.value: (
-            None if not e.usable
-            else (Decision.FLAGGED if (e.score or 0.0) >= fusion.threshold else Decision.NOT_FLAGGED).value
-        )
-        for e in evidence
-    }  # fmt: skip
-    score: float | None
-    score_kind: str | None
-    if fusion.state is FusionState.MULTIMODAL:
-        basis, score, score_kind = Basis.MULTIMODAL, fusion.fused_score, "fused_raw_score"
-        decision = Decision.FLAGGED if fusion.flagged else Decision.NOT_FLAGGED
-    elif fusion.state is FusionState.SINGLE_MODALITY:
-        (only,) = usable.values()
-        basis = Basis.AUDIO_ONLY if only.modality is Modality.AUDIO else Basis.VISUAL_ONLY
-        score, score_kind = only.score, f"{only.modality.value}_branch_raw_score"
-        decision = Decision(decisions[only.modality.value])
+def build_assessment(evidence: Sequence[ModalityEvidence], thresholds: Mapping[Modality, Thresholds]) -> dict[str, Any]:
+    usable = [e for e in evidence if e.usable]
+    branch = {e.modality.value: thresholds[e.modality].verdict(e.score or 0.0) if e.usable else None for e in evidence}
+    used = [v for v in branch.values() if v is not None]
+    if not used:
+        verdict = "insufficient_evidence"
+    elif "likely_manipulated" in used:
+        verdict = "likely_manipulated"
+    elif all(v == "likely_authentic" for v in used):
+        verdict = "likely_authentic"
     else:
-        basis, score, score_kind, decision = Basis.NONE, None, None, Decision.INSUFFICIENT_EVIDENCE
-    used_flags = {v for v in decisions.values() if v is not None}
-    agree = (len(used_flags) == 1) if basis is Basis.MULTIMODAL else None
-    summary = _SUMMARY[(decision, basis)]
-    if agree is False:
-        summary += (" The two branches disagree at the threshold, so this rests on an unvalidated average of "
-                    "them; read each branch separately.")
+        verdict = "inconclusive"
+    basis = ("multimodal" if len(usable) == 2 else
+             f"{usable[0].modality.value}_only" if usable else "none")  # fmt: skip
+    why = [f"the {_WHAT[e.modality]} looks {'manipulated' if branch[e.modality.value] == 'likely_manipulated' else 'genuine' if branch[e.modality.value] == 'likely_authentic' else 'borderline'} "
+           f"({round(100 * (e.score or 0))}% fake probability)" for e in usable]  # fmt: skip
+    summary = _SUMMARY[verdict] + (": " + "; ".join(why) + "." if why else
+                                   ". No face or speech was usable, so this says nothing about authenticity.")  # fmt: skip
     return {
-        "status": decision.value,
-        "basis": basis.value,
+        "verdict": verdict,
+        "basis": basis,
         "summary": summary,
-        "branches_agree": agree,
-        "score": None if score is None else round(score, 4),
-        "score_kind": score_kind,
-        "threshold": fusion.threshold,
-        "threshold_validated": fusion.threshold_validated,
-        "branch_decisions": decisions,
-        "modalities_used": sorted(m.value for m in usable),
-        "calibrated": False,
-        "not_authenticity_note": NOT_AUTHENTICITY_NOTE,
+        "score": max((e.score or 0.0 for e in usable), default=None),
+        "branch_verdicts": branch,
+        "thresholds": {m.value: {"t_real": round(t.t_real, 4), "t_fake": round(t.t_fake, 4)} for m, t in thresholds.items()},
+        "modalities_used": sorted(e.modality.value for e in usable),
     }

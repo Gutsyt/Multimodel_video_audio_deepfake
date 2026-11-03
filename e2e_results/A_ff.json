@@ -1,0 +1,722 @@
+[
+ {
+  "file": "real_006.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.018196861003928713
+ },
+ {
+  "file": "real_011.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.008288658222347273
+ },
+ {
+  "file": "real_017.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0878594036707625
+ },
+ {
+  "file": "real_027.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.04204241942283937
+ },
+ {
+  "file": "real_028.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.05738704583701067
+ },
+ {
+  "file": "real_089.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.6737922321636995
+ },
+ {
+  "file": "real_102.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0025909468852288184
+ },
+ {
+  "file": "real_104.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.016001401378843372
+ },
+ {
+  "file": "real_158.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.047908894122107394
+ },
+ {
+  "file": "real_166.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.3641758399512866
+ },
+ {
+  "file": "real_191.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.1436259878486955
+ },
+ {
+  "file": "real_206.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.8044788333025898
+ },
+ {
+  "file": "real_249.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.28889501972669
+ },
+ {
+  "file": "real_265.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.5667299852654355
+ },
+ {
+  "file": "real_291.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.09000825388031355
+ },
+ {
+  "file": "real_354.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.05657753093711224
+ },
+ {
+  "file": "real_366.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.563361078695729
+ },
+ {
+  "file": "real_373.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.13041664953465423
+ },
+ {
+  "file": "real_379.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.007134341623658896
+ },
+ {
+  "file": "real_380.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.4796790817985803
+ },
+ {
+  "file": "real_400.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.1448835283844329
+ },
+ {
+  "file": "real_416.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0005102674735645964
+ },
+ {
+  "file": "real_425.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.12012277046576725
+ },
+ {
+  "file": "real_433.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.023811086337164465
+ },
+ {
+  "file": "real_465.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.016556356656567267
+ },
+ {
+  "file": "real_467.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.19475724617537804
+ },
+ {
+  "file": "real_468.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.27423602100912864
+ },
+ {
+  "file": "real_487.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.01851537886172329
+ },
+ {
+  "file": "real_497.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.005803262782938332
+ },
+ {
+  "file": "real_498.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.2730627371463559
+ },
+ {
+  "file": "real_508.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.09591899755514788
+ },
+ {
+  "file": "real_518.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.030809583333617593
+ },
+ {
+  "file": "real_530.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.27613817071119334
+ },
+ {
+  "file": "real_611.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.10588491523980219
+ },
+ {
+  "file": "real_617.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.36120229682216365
+ },
+ {
+  "file": "real_639.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.06744144588717223
+ },
+ {
+  "file": "real_645.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.02055176965690086
+ },
+ {
+  "file": "real_646.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.02606002718924488
+ },
+ {
+  "file": "real_654.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.3007300292683607
+ },
+ {
+  "file": "real_663.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.3394367977030484
+ },
+ {
+  "file": "real_689.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.2313618511480947
+ },
+ {
+  "file": "real_700.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.01904785298902422
+ },
+ {
+  "file": "real_707.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.11295314668472436
+ },
+ {
+  "file": "real_709.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.022660492926757418
+ },
+ {
+  "file": "real_723.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.6943394792982447
+ },
+ {
+  "file": "real_743.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.06228355969848725
+ },
+ {
+  "file": "real_747.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.6109681627970014
+ },
+ {
+  "file": "real_751.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0014233750264482457
+ },
+ {
+  "file": "real_766.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.15474421372557073
+ },
+ {
+  "file": "real_792.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.027580517834004108
+ },
+ {
+  "file": "real_827.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.05316280272767567
+ },
+ {
+  "file": "real_830.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.68477341368342
+ },
+ {
+  "file": "real_845.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.5084583550504684
+ },
+ {
+  "file": "real_854.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.010464533624237564
+ },
+ {
+  "file": "real_888.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.7797373642528143
+ },
+ {
+  "file": "real_905.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.014477273221968394
+ },
+ {
+  "file": "real_911.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.530691689776254
+ },
+ {
+  "file": "real_941.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.06473101046166926
+ },
+ {
+  "file": "real_951.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.21024339289169072
+ },
+ {
+  "file": "real_964.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.011518686605003044
+ },
+ {
+  "file": "DeepFakeDetection_02_06__podium_speech_happy__N8OSN8P6.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9959940514108105
+ },
+ {
+  "file": "DeepFakeDetection_02_07__meeting_serious__1JCLEEBQ.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9972783638402308
+ },
+ {
+  "file": "DeepFakeDetection_02_13__meeting_serious__CP5HFV3K.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9968069907597823
+ },
+ {
+  "file": "DeepFakeDetection_02_13__secret_conversation__PLNVLO74.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.999563957682877
+ },
+ {
+  "file": "DeepFakeDetection_02_15__talking_angry_couch__I8G2LWD1.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9995843228668535
+ },
+ {
+  "file": "DeepFakeDetection_12_02__podium_speech_happy__9D2ZHEKW.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9986159053887091
+ },
+ {
+  "file": "DeepFakeDetection_12_15__walking_down_street_outside_angry__N0SRODQD.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9998991291556671
+ },
+ {
+  "file": "DeepFakeDetection_14_03__outside_talking_still_laughing__KJ221YN0.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9995526679022676
+ },
+ {
+  "file": "DeepFakeDetection_14_21__walking_and_outside_surprised__N0WM4GSV.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9991072031181462
+ },
+ {
+  "file": "DeepFakeDetection_16_05__walking_outside_cafe_disgusted__053HPS1G.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.999487027292038
+ },
+ {
+  "file": "DeepFakeDetection_16_28__outside_talking_pan_laughing__X5FNCYON.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9934491973584393
+ },
+ {
+  "file": "Deepfakes_065_089.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9901826314403064
+ },
+ {
+  "file": "Deepfakes_110_043.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9901271491909117
+ },
+ {
+  "file": "Deepfakes_265_475.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9517949072686283
+ },
+ {
+  "file": "Deepfakes_280_249.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9672947617558799
+ },
+ {
+  "file": "Deepfakes_465_482.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9842865752021881
+ },
+ {
+  "file": "Deepfakes_470_468.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.2382350590923664
+ },
+ {
+  "file": "Deepfakes_590_034.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.8116936168723176
+ },
+ {
+  "file": "Deepfakes_600_505.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.2488992907594447
+ },
+ {
+  "file": "Deepfakes_790_014.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9998154632470208
+ },
+ {
+  "file": "Deepfakes_830_828.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9964730583978045
+ },
+ {
+  "file": "Face2Face_015_919.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.7912256316338036
+ },
+ {
+  "file": "Face2Face_245_157.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.3523052919936357
+ },
+ {
+  "file": "Face2Face_265_475.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9346362264435801
+ },
+ {
+  "file": "Face2Face_590_034.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.5469226975442507
+ },
+ {
+  "file": "Face2Face_645_688.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.46324394483904885
+ },
+ {
+  "file": "Face2Face_755_759.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.6567250318881022
+ },
+ {
+  "file": "Face2Face_765_867.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.890549346563341
+ },
+ {
+  "file": "Face2Face_790_014.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9977652010172264
+ },
+ {
+  "file": "Face2Face_845_846.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9213229389328015
+ },
+ {
+  "file": "FaceShifter_065_089.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.8244265853151951
+ },
+ {
+  "file": "FaceShifter_200_189.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.907034370589385
+ },
+ {
+  "file": "FaceShifter_280_249.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9897999741722507
+ },
+ {
+  "file": "FaceShifter_380_358.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.8087742760011754
+ },
+ {
+  "file": "FaceShifter_385_414.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9022868495613273
+ },
+ {
+  "file": "FaceShifter_425_485.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.6616471100187199
+ },
+ {
+  "file": "FaceShifter_465_482.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.7797377951257063
+ },
+ {
+  "file": "FaceShifter_645_688.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.46637672338866054
+ },
+ {
+  "file": "FaceShifter_755_759.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.6562216495792761
+ },
+ {
+  "file": "FaceShifter_765_867.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.7933120222232426
+ },
+ {
+  "file": "FaceShifter_790_014.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9836765756951051
+ },
+ {
+  "file": "FaceShifter_845_846.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.6416691505972367
+ },
+ {
+  "file": "FaceSwap_065_089.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9747039699961808
+ },
+ {
+  "file": "FaceSwap_095_053.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9989329860230534
+ },
+ {
+  "file": "FaceSwap_110_043.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9815230200614402
+ },
+ {
+  "file": "FaceSwap_200_189.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9327500291854587
+ },
+ {
+  "file": "FaceSwap_245_157.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.28793937839356265
+ },
+ {
+  "file": "FaceSwap_280_249.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9993123044690155
+ },
+ {
+  "file": "FaceSwap_425_485.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.8053000849257345
+ },
+ {
+  "file": "FaceSwap_470_468.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.7012523923293998
+ },
+ {
+  "file": "FaceSwap_700_813.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.28339275188184815
+ },
+ {
+  "file": "FaceSwap_800_840.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.37665879919967993
+ },
+ {
+  "file": "NeuralTextures_015_919.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9160298504241176
+ },
+ {
+  "file": "NeuralTextures_425_485.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.3557921228750431
+ },
+ {
+  "file": "NeuralTextures_590_034.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.5395530308316854
+ },
+ {
+  "file": "NeuralTextures_600_505.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.2095365279984166
+ },
+ {
+  "file": "NeuralTextures_645_688.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.3949254594250666
+ },
+ {
+  "file": "NeuralTextures_715_721.mp4",
+  "label": "fake",
+  "verdict": "likely_authentic",
+  "score": 0.12496747531788097
+ },
+ {
+  "file": "NeuralTextures_755_759.mp4",
+  "label": "fake",
+  "verdict": "inconclusive",
+  "score": 0.6762234472609862
+ },
+ {
+  "file": "NeuralTextures_830_828.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9826686489660965
+ }
+]

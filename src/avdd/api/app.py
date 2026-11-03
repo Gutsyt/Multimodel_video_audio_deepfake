@@ -13,6 +13,7 @@ from typing import Any
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from avdd import __version__
@@ -45,8 +46,9 @@ RETENTION = (
     "no file name and no media) is kept in a local database until you delete it."
 )
 EVALUATION = (
-    "Pretrained-model inference only. No training was performed and no performance evaluation has "
-    "been completed; scores are uncalibrated and unvalidated."
+    "Scores are calibrated probabilities from linear heads trained on frozen CLIP / XLS-R features. "
+    "Thresholds were set on held-out validation data; measured error rates are in docs/MODEL_REPORT.md. "
+    "Results are evidence, not forensic proof."
 )
 
 
@@ -76,7 +78,7 @@ def create_app(settings: Settings | None = None, detectors: DetectorBundle | Non
         runner.shutdown()
 
     app = FastAPI(
-        title="avdd: audio-visual deepfake analysis (research prototype)",
+        title="avdd: audio-visual deepfake analysis",
         version=__version__,
         description=EVALUATION,
         lifespan=lifespan,
@@ -154,8 +156,11 @@ def create_app(settings: Settings | None = None, detectors: DetectorBundle | Non
         return AnalysisCreated(id=job_id, status="queued")
 
     def _status(row: dict[str, Any]) -> AnalysisStatusOut:
-        result = AnalysisResult.model_validate_json(row["result_json"]) if row["result_json"] else None
-        error = ApiErrorBody.model_validate_json(row["error_json"]) if row["error_json"] else None
+        result, error = None, ApiErrorBody.model_validate_json(row["error_json"]) if row["error_json"] else None
+        try:
+            result = AnalysisResult.model_validate_json(row["result_json"]) if row["result_json"] else None
+        except ValidationError:  # stored by an older version with different models; not re-interpretable
+            error = ApiErrorBody(code="legacy_result", message="Made by an older model version; re-run the analysis.")
         return AnalysisStatusOut(id=row["id"], status=row["status"], stage=row["stage"], stages=list(STAGES),
                                  created_utc=row["created_utc"], updated_utc=row["updated_utc"],
                                  result=result, error=error)

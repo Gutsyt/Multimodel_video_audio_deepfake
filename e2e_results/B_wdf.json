@@ -1,0 +1,380 @@
+[
+ {
+  "file": "104.tar_13.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9330227794656321
+ },
+ {
+  "file": "104.tar_57.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.773596759461885
+ },
+ {
+  "file": "104.tar_65.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9470857600699042
+ },
+ {
+  "file": "104.tar_83.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9659375496968671
+ },
+ {
+  "file": "12.tar_146.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.8541255157044064
+ },
+ {
+  "file": "12.tar_218.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.8381855743417208
+ },
+ {
+  "file": "12.tar_244.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9610252688628051
+ },
+ {
+  "file": "12.tar_90.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9908002440638342
+ },
+ {
+  "file": "13.tar_1.mp4",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.3126855498484623
+ },
+ {
+  "file": "15.tar_112.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9527597324921978
+ },
+ {
+  "file": "15.tar_120.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.7116238119276483
+ },
+ {
+  "file": "15.tar_134.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.8305287565313084
+ },
+ {
+  "file": "15.tar_152.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9791326110550521
+ },
+ {
+  "file": "16.tar_181.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9981621666567512
+ },
+ {
+  "file": "16.tar_188.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9412783947829522
+ },
+ {
+  "file": "16.tar_196.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.966129073410662
+ },
+ {
+  "file": "16.tar_209.mp4",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.7487522639849582
+ },
+ {
+  "file": "17.tar_1.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9956041756614236
+ },
+ {
+  "file": "17.tar_4.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9884294094534196
+ },
+ {
+  "file": "19.tar_26.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9913891471808046
+ },
+ {
+  "file": "19.tar_28.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9988052901140752
+ },
+ {
+  "file": "19.tar_47.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9950702052616588
+ },
+ {
+  "file": "19.tar_53.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9991400839707327
+ },
+ {
+  "file": "24.tar_200.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9160363756321627
+ },
+ {
+  "file": "24.tar_204.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9952933097971217
+ },
+ {
+  "file": "24.tar_208.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9301058616351541
+ },
+ {
+  "file": "24.tar_214.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9907231674471129
+ },
+ {
+  "file": "26.tar_109.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9971642402717757
+ },
+ {
+  "file": "26.tar_30.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.818033188670844
+ },
+ {
+  "file": "26.tar_47.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.8303046436446826
+ },
+ {
+  "file": "26.tar_50.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9246366093870746
+ },
+ {
+  "file": "27.tar_0.mp4",
+  "label": "real",
+  "verdict": "likely_manipulated",
+  "score": 0.9856192631724183
+ },
+ {
+  "file": "1.tar_1.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9919810405009899
+ },
+ {
+  "file": "1.tar_17.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9916752377878875
+ },
+ {
+  "file": "1.tar_33.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9907735856714237
+ },
+ {
+  "file": "1.tar_40.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9208982360479574
+ },
+ {
+  "file": "10.tar_64.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9947502819635048
+ },
+ {
+  "file": "10.tar_95.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9989009503994208
+ },
+ {
+  "file": "100.tar_0.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.8960310804987461
+ },
+ {
+  "file": "101.tar_144.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9450369637473055
+ },
+ {
+  "file": "102.tar_0.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9049201739522439
+ },
+ {
+  "file": "102.tar_25.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9958839008964999
+ },
+ {
+  "file": "102.tar_30.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9940774199133191
+ },
+ {
+  "file": "102.tar_5.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9188545877842589
+ },
+ {
+  "file": "103.tar_0.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9796485426532091
+ },
+ {
+  "file": "103.tar_2.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9813126901558293
+ },
+ {
+  "file": "103.tar_6.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.965743331828808
+ },
+ {
+  "file": "103.tar_8.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.829632220520141
+ },
+ {
+  "file": "104.tar_30.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9900491452809749
+ },
+ {
+  "file": "104.tar_48.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9983142031045088
+ },
+ {
+  "file": "104.tar_64.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.995327986481764
+ },
+ {
+  "file": "104.tar_8.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9949921067407121
+ },
+ {
+  "file": "105.tar_0.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9985945010915707
+ },
+ {
+  "file": "105.tar_1.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9991468163134172
+ },
+ {
+  "file": "105.tar_116.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9999278886797701
+ },
+ {
+  "file": "105.tar_90.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9993512452076834
+ },
+ {
+  "file": "106.tar_0.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9909097037373853
+ },
+ {
+  "file": "106.tar_11.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9622255201729395
+ },
+ {
+  "file": "106.tar_13.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9978034665382465
+ },
+ {
+  "file": "107.tar_1.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9874957734448455
+ },
+ {
+  "file": "107.tar_104.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9959045177184411
+ },
+ {
+  "file": "107.tar_66.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9733444428805196
+ },
+ {
+  "file": "107.tar_90.mp4",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9776499607024876
+ }
+]

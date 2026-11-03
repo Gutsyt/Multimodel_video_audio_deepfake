@@ -14,7 +14,7 @@ import uvicorn
 from avdd.api.app import create_app
 from avdd.api.models import bundle_from_detectors
 from avdd.api.settings import Settings
-from avdd.video.faces import HaarFaceDetector
+from avdd.video.faces import YuNetFaceDetector
 from tests.stubs import StubAudio, StubFace
 
 
@@ -22,7 +22,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8078)
     args = ap.parse_args()
-    bundle = bundle_from_detectors(StubAudio(0.8), StubFace(0.2), HaarFaceDetector())
+    bundle = bundle_from_detectors(StubAudio(0.8), StubFace(0.2), YuNetFaceDetector())
     uvicorn.run(create_app(Settings.from_env(), bundle), host="127.0.0.1", port=args.port, log_level="warning")
 
 

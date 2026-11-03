@@ -22,7 +22,7 @@ from avdd.common.protocols import (
 from avdd.common.types import Modality, ModalityEvidence, ModalityStatus
 
 logger = logging.getLogger(__name__)
-AGGREGATION = "mean of per-window raw scores"
+AGGREGATION = "median of per-window calibrated scores"
 SATURATION_LEVEL = 0.99  # a window at or above this is "saturated": the softmax says nothing finer
 DISAGREEMENT_RANGE = 0.5  # max-min across windows at/above this is called out; it changes no score
 
@@ -53,7 +53,7 @@ def _window_stats(scores: list[float], threshold: float) -> dict[str, Any]:
 def _tail_note(n_samples: int, n_windows: int) -> str:
     full, rem = divmod(n_samples, WINDOW_SAMPLES)
     if n_samples < WINDOW_SAMPLES:
-        return "clip shorter than one window: looped to full length (upstream AASIST protocol)"
+        return "clip shorter than one window: looped to full length"
     if rem == 0:
         return "audio length is an exact multiple of the window; nothing overlapped or dropped"
     if n_windows == full:
@@ -105,8 +105,7 @@ def run_audio_branch(
         return BranchOutput(ev, details)
 
     details["segments"] = [
-        {"start_s": round(w.start_s, 3), "end_s": round(w.end_s, 3), "score": round(it.score, 4),
-         "logits": _rounded(it.logits), "class_probs": _rounded(it.probs, 5)}
+        {"start_s": round(w.start_s, 3), "end_s": round(w.end_s, 3), "score": round(it.score, 4)}
         for w, it in zip(windows, items, strict=True)
     ]
     diagnostics["windows"] = {**_window_stats(scores, threshold),
@@ -115,16 +114,12 @@ def run_audio_branch(
     details["max_window_score"] = round(max(scores), 4)
     details["sample_rate"] = SAMPLE_RATE
     details["runtime_s"] = round(perf_counter() - t0, 3)
-    mean = sum(scores) / len(scores)
     caveats: list[str] = ["only one analysis window"] if len(windows) == 1 else []
     if len(scores) > 1 and max(scores) - min(scores) >= DISAGREEMENT_RANGE:
         caveats.append(
             f"window scores disagree strongly ({min(scores):.2f} to {max(scores):.2f}); "
-            "the mean hides this, so read the per-window values"
+            "the median limits their effect, but read the per-window values"
         )
     return BranchOutput(ModalityEvidence(Modality.AUDIO, ModalityStatus.AVAILABLE,
-                                         score=mean, reasons=tuple(caveats)), details)  # fmt: skip
+                                         score=statistics.median(scores), reasons=tuple(caveats)), details)  # fmt: skip
 
-
-def _rounded(values: dict[str, float] | None, digits: int = 3) -> dict[str, float] | None:
-    return None if values is None else {k: round(v, digits) for k, v in values.items()}

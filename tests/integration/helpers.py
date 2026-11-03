@@ -32,10 +32,10 @@ class Api:
             time.sleep(0.05)
         raise AssertionError("analysis did not finish in time")
 
-    def run(self, path: Path) -> dict[str, Any]:
+    def run(self, path: Path, timeout: float = 30.0) -> dict[str, Any]:
         r = self.upload(path)
         assert r.status_code == 202, r.text
-        return self.wait(r.json()["id"])
+        return self.wait(r.json()["id"], timeout)
 
     def assert_clean(self) -> None:
         assert list(self.settings.upload_dir.iterdir()) == [], "temporary upload files were left behind"

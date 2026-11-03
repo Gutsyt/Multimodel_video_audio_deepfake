@@ -16,38 +16,21 @@ from avdd.common.branch import BranchOutput
 from avdd.common.errors import AvddError
 from avdd.common.protocols import AudioWindowDetector, FaceImageDetector
 from avdd.common.types import Modality, ModalityEvidence, ModalityStatus
-from avdd.fusion.assessment import build_assessment
-from avdd.fusion.score_fusion import FusionConfig, fuse_scores
+from avdd.fusion.assessment import build_assessment, thresholds_of
 from avdd.media.availability import availability_from_probe
 from avdd.media.probe import ProbeStatus, probe_media
 from avdd.video.branch import VideoBranchConfig, run_image_branch, run_video_branch
 from avdd.video.faces import FaceBoxDetector
 
 logger = logging.getLogger(__name__)
-SCHEMA_VERSION = "0.2"
-STAGES: tuple[str, ...] = ("probing", "audio", "visual", "fusion")  # reported via on_stage
-
-INTERPRETATION: dict[str, Any] = {
-    "score_meaning": (
-        "Raw model output in [0, 1]: the softmax mass a pretrained model puts on its 'fake/spoof' "
-        "class. It is NOT a calibrated probability and has not been validated on this project's data."
-    ),
-    "calibrated": False,
-    "validated_on_project_data": False,
-    "flag_meaning": (
-        "'Flagged' means only that a score crossed an unvalidated default threshold. 'Not flagged' is "
-        "not evidence of authenticity; genuine media can be flagged and manipulated media can evade detection. "
-        "'Insufficient evidence' means no usable evidence was available, not that the media is authentic."
-    ),
-    "not_forensic_proof": "Outputs are research-prototype model scores, not legal or forensic proof.",
-}
+SCHEMA_VERSION = "1.0"
+STAGES: tuple[str, ...] = ("probing", "audio", "visual", "verdict")  # reported via on_stage
 
 
 @dataclass(frozen=True)
 class AnalysisConfig:
     max_seconds: float = 60.0
     video: VideoBranchConfig = field(default_factory=VideoBranchConfig)
-    fusion: FusionConfig = field(default_factory=FusionConfig)
 
 
 def _absent(modality: Modality, status: ModalityStatus, reason: str) -> BranchOutput:
@@ -91,6 +74,7 @@ def analyze_media(
     avail = availability_from_probe(probe)
     outcome = "analyzed" if probe.status is ProbeStatus.OK else "unreadable_media"
     results: dict[Modality, BranchOutput] = {}
+    th = {Modality.AUDIO: thresholds_of(audio_detector), Modality.VISUAL: thresholds_of(video_detector)}
 
     for modality in (Modality.AUDIO, Modality.VISUAL):
         status = avail[modality]
@@ -103,20 +87,18 @@ def analyze_media(
                 results[modality] = _absent(modality, ModalityStatus.NOT_ANALYZED, "no audio model loaded")
             else:
                 notify("audio")
-                results[modality] = run_audio_branch(path, audio_detector, cfg.max_seconds,
-                                                     cfg.fusion.flag_threshold)
+                results[modality] = run_audio_branch(path, audio_detector, cfg.max_seconds, th[modality].t_fake)
         elif video_detector is None or face_detector is None:
             results[modality] = _absent(modality, ModalityStatus.NOT_ANALYZED, "no visual model loaded")
         else:
             notify("visual")
-            vcfg = replace(cfg.video, threshold=cfg.fusion.flag_threshold)
+            vcfg = replace(cfg.video, threshold=th[modality].t_fake)
             run = run_image_branch if probe.kind == "image" else run_video_branch
             results[modality] = run(path, video_detector, face_detector, vcfg)
 
-    notify("fusion")
+    notify("verdict")
     evidence = [results[Modality.AUDIO].evidence, results[Modality.VISUAL].evidence]
-    fusion = fuse_scores(evidence, cfg.fusion)
-    assessment = build_assessment(evidence, fusion)
+    assessment = build_assessment(evidence, th)
     cards = [d.model_card.to_dict() for d in (audio_detector, video_detector) if d is not None]
     media = {k: v for k, v in probe.to_dict().items() if k not in ("status", "error")}
     return {
@@ -125,13 +107,11 @@ def analyze_media(
         "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "outcome": outcome,
         "media": media,
-        "modalities": {m.value: {**_modality_json(o), "decision": assessment["branch_decisions"][m.value]}
+        "modalities": {m.value: {**_modality_json(o), "verdict": assessment["branch_verdicts"][m.value]}
                        for m, o in results.items()},
-        "fusion": fusion.to_dict(),
         "assessment": assessment,
         "models": cards,
         "is_test_fixture": any(c["is_test_fixture"] for c in cards),
-        "interpretation": INTERPRETATION,
         "analyzed_limit_s": cfg.max_seconds,
         "total_runtime_s": round(perf_counter() - t0, 3),
     }

@@ -33,12 +33,10 @@ class Settings:
     max_upload_bytes: int = 100 * 1024 * 1024
     max_duration_s: float = 60.0
     max_pending: int = 4
-    n_frames: int = 16
+    n_frames: int = 12
     history_max_items: int = 200
-    audio_model: str = "AASIST"  # AASIST | AASIST-L | none
-    video_model: str = "hf"  # hf | none
-    hf_model_id: str | None = None
-    hf_revision: str | None = None
+    audio_model: str = "xlsr"  # xlsr | none
+    video_model: str = "clip"  # clip | none
     device: str = "cpu"
     cors_origins: tuple[str, ...] = ("http://localhost:5173", "http://127.0.0.1:5173")
     frontend_dist: Path | None = None
@@ -66,13 +64,11 @@ class Settings:
             max_upload_bytes=_env_int("AVDD_MAX_UPLOAD_MB", 100) * 1024 * 1024,
             max_duration_s=float(_env_int("AVDD_MAX_DURATION_S", 60)),
             max_pending=_env_int("AVDD_MAX_PENDING", 4),
-            n_frames=_env_int("AVDD_FRAMES", 16),
+            n_frames=_env_int("AVDD_FRAMES", 12),
             history_max_items=_env_int("AVDD_HISTORY_MAX", 200),
             max_image_pixels=_env_int("AVDD_MAX_IMAGE_MEGAPIXELS", 40) * 1_000_000,
-            audio_model=env("AVDD_AUDIO_MODEL", "AASIST") or "AASIST",
-            video_model=env("AVDD_VIDEO_MODEL", "hf") or "hf",
-            hf_model_id=env("AVDD_HF_MODEL") or None,
-            hf_revision=env("AVDD_HF_REVISION") or None,
+            audio_model=env("AVDD_AUDIO_MODEL", "xlsr") or "xlsr",
+            video_model=env("AVDD_VIDEO_MODEL", "clip") or "clip",
             device=env("AVDD_DEVICE", "cpu") or "cpu",
             cors_origins=tuple(o.strip() for o in origins.split(",") if o.strip())
             if origins

@@ -4,7 +4,7 @@
     python scripts/run_server.py                  # http://127.0.0.1:8000
     python scripts/run_server.py --port 8001
 
-Configuration is read from AVDD_* environment variables (see docs/runbook_local.md).
+Configuration is read from AVDD_* environment variables (see README).
 """
 
 from __future__ import annotations

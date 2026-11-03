@@ -1,0 +1,962 @@
+[
+ {
+  "file": "Alexandria_Ocasio-Cortez_1047.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.014500695096720518
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_1390.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0008602500778638169
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_2173.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 1.9939952118132606e-05
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_3177.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 7.876953981147774e-05
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_3607.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.013454671319400464
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_72.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00017968993671397043
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_996.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.011146470664321617
+ },
+ {
+  "file": "Bernie_Sanders_1119.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.02364355644853122
+ },
+ {
+  "file": "Bernie_Sanders_1122.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00023088535679174563
+ },
+ {
+  "file": "Bernie_Sanders_1275.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00016588490918067518
+ },
+ {
+  "file": "Bernie_Sanders_1292.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.004184816315171868
+ },
+ {
+  "file": "Bernie_Sanders_1426.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0028693151648751347
+ },
+ {
+  "file": "Bernie_Sanders_149.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.002016721186969349
+ },
+ {
+  "file": "Bernie_Sanders_1565.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0001513317790530541
+ },
+ {
+  "file": "Bernie_Sanders_158.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.001029147791388053
+ },
+ {
+  "file": "Bernie_Sanders_1583.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00025820013624481175
+ },
+ {
+  "file": "Bernie_Sanders_1598.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0016882471211797354
+ },
+ {
+  "file": "Bernie_Sanders_1656.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.000193130082264583
+ },
+ {
+  "file": "Bernie_Sanders_1669.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.04957111028410134
+ },
+ {
+  "file": "Bernie_Sanders_167.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0015234760516488833
+ },
+ {
+  "file": "Bernie_Sanders_1730.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00018404380472371106
+ },
+ {
+  "file": "Bernie_Sanders_1773.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.000907680994500479
+ },
+ {
+  "file": "Bernie_Sanders_1854.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0033782442987608423
+ },
+ {
+  "file": "Bernie_Sanders_1986.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.006446353382575267
+ },
+ {
+  "file": "Bernie_Sanders_2187.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.026520553567901707
+ },
+ {
+  "file": "Bernie_Sanders_2216.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00011047934252666969
+ },
+ {
+  "file": "Bernie_Sanders_2355.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.001295200217622786
+ },
+ {
+  "file": "Bernie_Sanders_2608.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 8.492218441323598e-05
+ },
+ {
+  "file": "Bernie_Sanders_264.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00029887631701197863
+ },
+ {
+  "file": "Bernie_Sanders_2808.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.006201150941085759
+ },
+ {
+  "file": "Bernie_Sanders_2911.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 7.942470253510152e-05
+ },
+ {
+  "file": "Bernie_Sanders_3019.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 5.027806418232583e-05
+ },
+ {
+  "file": "Bernie_Sanders_3135.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0049814267131835606
+ },
+ {
+  "file": "Bernie_Sanders_3140.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.010560040515917298
+ },
+ {
+  "file": "Bernie_Sanders_329.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00026878279749998816
+ },
+ {
+  "file": "Bernie_Sanders_3511.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.034935061930906716
+ },
+ {
+  "file": "Bernie_Sanders_3526.flac",
+  "label": "real",
+  "verdict": "insufficient_evidence",
+  "score": null
+ },
+ {
+  "file": "Bernie_Sanders_3539.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0012537287720641296
+ },
+ {
+  "file": "Bernie_Sanders_3714.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00022594612792207003
+ },
+ {
+  "file": "Bernie_Sanders_3739.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.003500048303386597
+ },
+ {
+  "file": "Bernie_Sanders_3783.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0013785436442406277
+ },
+ {
+  "file": "Bernie_Sanders_382.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 5.4223262780549916e-05
+ },
+ {
+  "file": "Bernie_Sanders_3821.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0002812430136740436
+ },
+ {
+  "file": "Bernie_Sanders_3826.flac",
+  "label": "real",
+  "verdict": "insufficient_evidence",
+  "score": null
+ },
+ {
+  "file": "Bernie_Sanders_3878.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0008970856771262678
+ },
+ {
+  "file": "Bernie_Sanders_3899.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0011012036987869901
+ },
+ {
+  "file": "Bernie_Sanders_3952.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.005180615932843108
+ },
+ {
+  "file": "Bernie_Sanders_492.flac",
+  "label": "real",
+  "verdict": "inconclusive",
+  "score": 0.31437200547214805
+ },
+ {
+  "file": "Bernie_Sanders_55.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0036458275418452713
+ },
+ {
+  "file": "Bernie_Sanders_694.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 5.5972821670350803e-05
+ },
+ {
+  "file": "Bernie_Sanders_710.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.000809524210274576
+ },
+ {
+  "file": "Bernie_Sanders_799.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0002781748007586147
+ },
+ {
+  "file": "Bernie_Sanders_846.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00011892527948875255
+ },
+ {
+  "file": "Bernie_Sanders_85.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.005661070872673194
+ },
+ {
+  "file": "Bernie_Sanders_951.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0008700789448213201
+ },
+ {
+  "file": "Bernie_Sanders_959.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.011282503971662894
+ },
+ {
+  "file": "Bernie_Sanders_989.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0035644475375034733
+ },
+ {
+  "file": "Kanye_West_1678.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.001868632711172015
+ },
+ {
+  "file": "Kanye_West_3490.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00010201157671695884
+ },
+ {
+  "file": "Louis_C.K._1556.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0420221880918032
+ },
+ {
+  "file": "Lyndon_Johnson_608.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0005092149515323607
+ },
+ {
+  "file": "Lyndon_Johnson_886.flac",
+  "label": "real",
+  "verdict": "insufficient_evidence",
+  "score": null
+ },
+ {
+  "file": "Lyndon_Johnson_997.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.003066050407269216
+ },
+ {
+  "file": "Winston_Churchill_1685.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.002954864292323978
+ },
+ {
+  "file": "Winston_Churchill_1905.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 1.9806615354450385e-05
+ },
+ {
+  "file": "Winston_Churchill_2417.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.01096366033200714
+ },
+ {
+  "file": "Winston_Churchill_2432.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0005792180565510594
+ },
+ {
+  "file": "Winston_Churchill_2719.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0005911458928466528
+ },
+ {
+  "file": "Winston_Churchill_2774.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0012144305800203348
+ },
+ {
+  "file": "Winston_Churchill_2778.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0020623442673816266
+ },
+ {
+  "file": "Winston_Churchill_2824.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0003173507356592854
+ },
+ {
+  "file": "Winston_Churchill_336.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0004516626820394762
+ },
+ {
+  "file": "Winston_Churchill_3438.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00011760080396401498
+ },
+ {
+  "file": "Winston_Churchill_356.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.019507660762242786
+ },
+ {
+  "file": "Winston_Churchill_3768.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0019913051014626535
+ },
+ {
+  "file": "Winston_Churchill_3937.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00022829348706187322
+ },
+ {
+  "file": "Winston_Churchill_442.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.00039391934672953154
+ },
+ {
+  "file": "Winston_Churchill_448.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 7.821694815330169e-05
+ },
+ {
+  "file": "Winston_Churchill_674.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0011712593537851355
+ },
+ {
+  "file": "Winston_Churchill_707.flac",
+  "label": "real",
+  "verdict": "likely_authentic",
+  "score": 0.0005644593766719981
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_1148.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9982217229228594
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_21.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9943706021908125
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_2320.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9762259080447568
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_2404.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9638940691274274
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_2591.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9955859794144983
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_2639.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9945667193426937
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_2655.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9988094413339377
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_2971.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9985294353411087
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_3093.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9825032039959687
+ },
+ {
+  "file": "Alexandria_Ocasio-Cortez_690.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9670555569052418
+ },
+ {
+  "file": "Bernie_Sanders_107.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9993656448378287
+ },
+ {
+  "file": "Bernie_Sanders_1132.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.999862362635419
+ },
+ {
+  "file": "Bernie_Sanders_1151.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9999155547205831
+ },
+ {
+  "file": "Bernie_Sanders_1220.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.999956803789246
+ },
+ {
+  "file": "Bernie_Sanders_1227.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9884048124401706
+ },
+ {
+  "file": "Bernie_Sanders_1454.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9999222438307376
+ },
+ {
+  "file": "Bernie_Sanders_1519.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9960718835548268
+ },
+ {
+  "file": "Bernie_Sanders_1586.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9999120088123525
+ },
+ {
+  "file": "Bernie_Sanders_1613.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.999977658477923
+ },
+ {
+  "file": "Bernie_Sanders_181.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9998700679182881
+ },
+ {
+  "file": "Bernie_Sanders_186.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9997779154882198
+ },
+ {
+  "file": "Bernie_Sanders_1987.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9987637976490806
+ },
+ {
+  "file": "Bernie_Sanders_2025.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9994805244115899
+ },
+ {
+  "file": "Bernie_Sanders_2117.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9996559824795949
+ },
+ {
+  "file": "Bernie_Sanders_2147.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9994992509094938
+ },
+ {
+  "file": "Bernie_Sanders_2185.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9998266597505194
+ },
+ {
+  "file": "Bernie_Sanders_2282.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9995959665173444
+ },
+ {
+  "file": "Bernie_Sanders_2320.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9995369682524713
+ },
+ {
+  "file": "Bernie_Sanders_2410.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9991163424680524
+ },
+ {
+  "file": "Bernie_Sanders_2415.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9993034085326854
+ },
+ {
+  "file": "Bernie_Sanders_2422.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9994339345250853
+ },
+ {
+  "file": "Bernie_Sanders_2429.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9981907135975047
+ },
+ {
+  "file": "Bernie_Sanders_2555.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9991179839796863
+ },
+ {
+  "file": "Bernie_Sanders_2661.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9997038323996081
+ },
+ {
+  "file": "Bernie_Sanders_2784.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9999071269812586
+ },
+ {
+  "file": "Bernie_Sanders_2789.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9947074839450957
+ },
+ {
+  "file": "Bernie_Sanders_2819.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9997989035906619
+ },
+ {
+  "file": "Bernie_Sanders_2848.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9925667697112336
+ },
+ {
+  "file": "Bernie_Sanders_292.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9998495723339075
+ },
+ {
+  "file": "Bernie_Sanders_2944.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9988193831143647
+ },
+ {
+  "file": "Bernie_Sanders_2969.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9945819554021347
+ },
+ {
+  "file": "Bernie_Sanders_302.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9999237158975325
+ },
+ {
+  "file": "Bernie_Sanders_3065.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9991958308651525
+ },
+ {
+  "file": "Bernie_Sanders_3095.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9995182063810248
+ },
+ {
+  "file": "Bernie_Sanders_3194.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9998556505464266
+ },
+ {
+  "file": "Bernie_Sanders_321.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9989173792640637
+ },
+ {
+  "file": "Bernie_Sanders_3213.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9994133799296596
+ },
+ {
+  "file": "Bernie_Sanders_3444.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.999898564961468
+ },
+ {
+  "file": "Bernie_Sanders_3486.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9994458306213581
+ },
+ {
+  "file": "Bernie_Sanders_3547.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9878672560740358
+ },
+ {
+  "file": "Bernie_Sanders_3669.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9684945574825148
+ },
+ {
+  "file": "Bernie_Sanders_3688.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9990335779698871
+ },
+ {
+  "file": "Bernie_Sanders_3752.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9985775395485712
+ },
+ {
+  "file": "Bernie_Sanders_3771.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9998883328360726
+ },
+ {
+  "file": "Bernie_Sanders_3827.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9996501611370822
+ },
+ {
+  "file": "Bernie_Sanders_3832.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9995806195849161
+ },
+ {
+  "file": "Bernie_Sanders_477.flac",
+  "label": "fake",
+  "verdict": "insufficient_evidence",
+  "score": null
+ },
+ {
+  "file": "Bernie_Sanders_564.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9991188786734744
+ },
+ {
+  "file": "Bernie_Sanders_634.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9993869266883509
+ },
+ {
+  "file": "Bernie_Sanders_685.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9802759298611163
+ },
+ {
+  "file": "Bernie_Sanders_73.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.980345811029591
+ },
+ {
+  "file": "Bernie_Sanders_78.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9992779399133845
+ },
+ {
+  "file": "Bernie_Sanders_788.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9999269399126984
+ },
+ {
+  "file": "Bernie_Sanders_842.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9994341285599927
+ },
+ {
+  "file": "Frank_Sinatra_1126.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9817975641114287
+ },
+ {
+  "file": "Kanye_West_26.flac",
+  "label": "fake",
+  "verdict": "insufficient_evidence",
+  "score": null
+ },
+ {
+  "file": "Kanye_West_3013.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9978848916704075
+ },
+ {
+  "file": "Kanye_West_3402.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9990982672484309
+ },
+ {
+  "file": "Kanye_West_707.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.999820882555609
+ },
+ {
+  "file": "Louis_C.K._2168.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9978030653848302
+ },
+ {
+  "file": "Louis_C.K._916.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9982809056653503
+ },
+ {
+  "file": "Lyndon_Johnson_2992.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9981862256189812
+ },
+ {
+  "file": "Lyndon_Johnson_3936.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9953729647829851
+ },
+ {
+  "file": "Winston_Churchill_1101.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9999746869849404
+ },
+ {
+  "file": "Winston_Churchill_1991.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9991518908820797
+ },
+ {
+  "file": "Winston_Churchill_2770.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9974031628936868
+ },
+ {
+  "file": "Winston_Churchill_3558.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9986435231517795
+ },
+ {
+  "file": "Winston_Churchill_399.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9999664872024983
+ },
+ {
+  "file": "Winston_Churchill_579.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.9998879774172583
+ },
+ {
+  "file": "Winston_Churchill_710.flac",
+  "label": "fake",
+  "verdict": "likely_manipulated",
+  "score": 0.998907618243368
+ }
+]

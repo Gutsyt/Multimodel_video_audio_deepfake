@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 
 from avdd.audio.branch import run_audio_branch
 from avdd.audio.extract import SAMPLE_RATE, assess_audio, decode_audio
@@ -55,11 +57,11 @@ def test_trailing_piece_of_a_longer_clip_is_real_audio_not_a_loop() -> None:
     """Regression: tiled trailing windows were scored as spoof ~8x more often on genuine speech."""
     wave = np.arange(10 * SAMPLE_RATE, dtype=np.float32)  # every sample unique, so any looping is visible
     ten = make_windows(wave)
-    assert [w.start_s for w in ten] == pytest.approx([0.0, 4.0375, 5.9625])
+    assert [w.start_s for w in ten] == pytest.approx([0.0, 4.0, 6.0])
     assert not any(w.synthetic for w in ten)
     last = ten[-1]
     assert last.end_s == pytest.approx(10.0)
-    assert np.array_equal(last.samples, wave[-WINDOW_SAMPLES:])  # the final 4.04 s as they really are
+    assert np.array_equal(last.samples, wave[-WINDOW_SAMPLES:])  # the final 4 s as they really are
     for w in ten:  # no window contains a repeated sample
         assert len(np.unique(w.samples)) == WINDOW_SAMPLES
     exact = make_windows(wave[: 2 * WINDOW_SAMPLES])
@@ -94,15 +96,17 @@ def test_branch_corrupted(media_dir: Path) -> None:
     assert out.evidence.status is ModalityStatus.CORRUPTED
 
 
-@pytest.mark.parametrize("variant", ["AASIST-L", "AASIST"])
-def test_real_aasist_weights_load_and_run(variant: str) -> None:
-    """Software smoke test of the vendored pretrained weights. NOT a measure of detection accuracy."""
-    pytest.importorskip("torch")
-    from avdd.audio.aasist_detector import AasistDetector
+class Disagreeing(StubAudio):
+    def score_windows(self, windows: Sequence[NDArray[np.float32]]) -> list[float]:
+        return [0.01, 0.99, 0.99][: len(windows)]
 
-    det = AasistDetector(variant)
-    det.load()
-    x = (np.random.default_rng(0).standard_normal(WINDOW_SAMPLES) * 0.05).astype(np.float32)
-    s1, s2 = det.score_windows([x])[0], det.score_windows([x])[0]
-    assert 0.0 <= s1 <= 1.0 and s1 == s2
-    assert det.model_card.license.startswith("MIT") and "ASVspoof" in det.model_card.trained_on
+
+def test_disagreeing_windows_are_called_out_and_median_is_used(tmp_path: Path) -> None:
+    import subprocess
+
+    wav = tmp_path / "long.wav"  # 12 s -> 3 windows
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", "sine=frequency=300:duration=12:sample_rate=16000",
+                    str(wav)], check=True, timeout=60)  # fmt: skip
+    out = run_audio_branch(wav, Disagreeing())
+    assert out.evidence.score == pytest.approx(0.99)
+    assert any("disagree strongly" in r for r in out.evidence.reasons)

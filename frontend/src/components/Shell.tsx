@@ -1,66 +1,51 @@
+import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 import type { Capabilities } from "../api";
-import { hrefFor, type Route } from "../lib/route";
-import { BrandMark, Icon, type IconName } from "./Icon";
+import type { Route } from "../lib/route";
+import { BrandMark } from "./Icon";
 
-const NAV: { route: Route; label: string; icon: IconName }[] = [
-  { route: { name: "dashboard" }, label: "Dashboard", icon: "dashboard" },
-  { route: { name: "analyze" }, label: "New analysis", icon: "analyze" },
-  { route: { name: "history" }, label: "History", icon: "history" },
-  { route: { name: "reports" }, label: "Reports", icon: "reports" },
-  { route: { name: "system" }, label: "System", icon: "system" },
-];
-const activeName = (r: Route) => (r.name === "analysis" ? "history" : r.name);
+const NAV = [{ href: "#/", label: "Analyze", match: ["analyze", "analysis"] }, { href: "#/history", label: "History", match: ["history"] }, { href: "#/models", label: "Models", match: ["models"] }];
 
-export function ModelDots({ caps, error }: { caps: Capabilities | null; error: boolean }) {
-  if (error) return <div className="row"><span className="pulse down" /> <span>Backend unreachable</span></div>;
-  if (!caps) return <div className="row"><span className="pulse" /> <span>Checking backend…</span></div>;
+function ModelChip({ caps, capsError }: { caps: Capabilities | null; capsError: boolean }) {
+  const [cls, text] = capsError ? ["bad", "Backend offline"] : !caps || caps.models_state === "loading" ? ["wait", "Loading models"]
+    : caps.models_state === "ready" ? ["ok", "Models ready"] : ["bad", "Models unavailable"];
+  return <span className="chip" role="status"><span className={`dot ${cls}`} />{text}</span>;
+}
+
+export function Shell({ route, caps, capsError, children }: { route: Route; caps: Capabilities | null; capsError: boolean; children: ReactNode }) {
+  const key = route.name === "analysis" ? route.id : route.name;
   return (
     <>
-      {caps.models.map((m) => (
-        <div className="row" key={m.role} style={{ gap: 8 }}>
-          <span className={`pulse ${m.state === "loaded" ? "up" : m.state === "failed" ? "down" : ""}`} />
-          <span style={{ textTransform: "capitalize" }}>{m.role}</span>
-          <span className="faint">{m.state === "failed" ? `failed (${m.error_code ?? "error"})` : m.state}</span>
+      <header className="top">
+        <div className="top-in">
+          <a className="brand" href="#/"><BrandMark /> <span>AVDD <em>lens</em></span></a>
+          <nav className="nav" aria-label="Main">
+            {NAV.map((n) => {
+              const on = n.match.includes(route.name);
+              return (
+                <a key={n.href} href={n.href} aria-current={on ? "page" : undefined}>
+                  {on && <motion.span layoutId="navpill" className="pill" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
+                  {n.label}
+                </a>
+              );
+            })}
+          </nav>
+          <ModelChip caps={caps} capsError={capsError} />
         </div>
-      ))}
+      </header>
+      <main>
+        <AnimatePresence mode="wait">
+          <motion.div key={key} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
+            {children}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+      <footer className="foot">Results are model evidence, not forensic proof. Media is deleted right after analysis; only the result is stored locally.</footer>
     </>
   );
 }
 
-export function Shell({ route, caps, capsError, children }: { route: Route; caps: Capabilities | null; capsError: boolean; children: ReactNode }) {
-  return (
-    <div className="shell">
-      <aside className="side">
-        <a className="brand" href="#/" aria-label="AVDD home">
-          <BrandMark />
-          <div><b>AVDD</b><span>Audio-Visual Deepfake Detection</span></div>
-        </a>
-        <nav className="nav" aria-label="Main">
-          {NAV.map((n) => (
-            <a key={n.route.name} href={hrefFor(n.route)} aria-current={activeName(route) === n.route.name ? "page" : undefined}>
-              <Icon name={n.icon} /> {n.label}
-            </a>
-          ))}
-        </nav>
-        <div className="health" aria-label="Backend status">
-          <b style={{ fontSize: "0.78rem" }} className="muted">Models (live check)</b>
-          <ModelDots caps={caps} error={capsError} />
-        </div>
-      </aside>
-      <main className="main" id="main">
-        <a className="topbrand brand" href="#/" aria-label="AVDD home"><BrandMark size={28} /><div><b>AVDD</b></div></a>
-        {children}
-      </main>
-    </div>
-  );
-}
-
-export function PageHead({ title, lead, actions }: { title: string; lead?: ReactNode; actions?: ReactNode }) {
-  return (
-    <div className="pagehead">
-      <div><h1>{title}</h1>{lead ? <p>{lead}</p> : null}</div>
-      {actions ? <div className="row noprint">{actions}</div> : null}
-    </div>
-  );
-}
+/** Staggered reveal for a list of children. */
+export const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } } };
+export const rise = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };

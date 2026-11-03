@@ -92,40 +92,31 @@ class DetectorManager:
         video: FaceImageDetector | None = None
         face: FaceBoxDetector | None = None
         failures: dict[str, str] = {}
-        try:
-            if s.audio_model != "none":
-                from avdd.audio.aasist_detector import AasistDetector
+        if s.audio_model != "none":
+            from avdd.audio.ssl_detector import SslAudioDetector
 
-                a = AasistDetector(s.audio_model, device=s.device)
-                try:
-                    a.load()
-                    audio = a
-                except AvddError as exc:
-                    failures["audio"] = exc.code
-                    logger.warning("audio model not loaded: %s", exc.code)
-            if s.video_model == "hf":
-                from avdd.video.faces import HaarFaceDetector
-                from avdd.video.hf_detector import (
-                    DEFAULT_MODEL_ID,
-                    DEFAULT_REVISION,
-                    HfImageDetector,
-                )
+            a = SslAudioDetector(device=s.device)
+            try:
+                a.load()
+                audio = a
+            except AvddError as exc:
+                failures["audio"] = exc.code
+                logger.warning("audio model not loaded: %s", exc.code)
+        if s.video_model != "none":
+            from avdd.video.clip_detector import ClipFaceDetector
+            from avdd.video.faces import YuNetFaceDetector
 
-                v = HfImageDetector(s.hf_model_id or DEFAULT_MODEL_ID, s.hf_revision or DEFAULT_REVISION, s.device)
-                try:
-                    face = HaarFaceDetector()
-                    info = v.load()
-                    video = v
-                    logger.info("visual model loaded: %s", info)
-                except AvddError as exc:
-                    failures["visual"] = exc.code
-                    logger.warning("visual model not loaded: %s", exc.code)
-                except Exception:
-                    failures["visual"] = "face_detector_unavailable"
-                    logger.warning("face detector unavailable", exc_info=True)
-        except Exception:
-            logger.exception("unexpected error while loading models")
-            failures.setdefault("audio", "load_error")
+            v = ClipFaceDetector(device=s.device)
+            try:
+                face = YuNetFaceDetector()
+                v.load()
+                video = v
+            except AvddError as exc:
+                failures["visual"] = exc.code
+                logger.warning("visual model not loaded: %s", exc.code)
+            except Exception:
+                failures["visual"] = "load_error"
+                logger.exception("visual model not loaded")
         bundle = bundle_from_detectors(audio, video, face, failures)
         with self._lock:
             self._bundle = bundle
